@@ -79,8 +79,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQD0Loo=
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
-github.com/vegidio/umd-lib v0.0.0-20250814050101-d1f8efa57498 h1:0Mat0mhuPSASS/vI1oc15Xfgujx39tlZDKAgeK0DxQU=
-github.com/vegidio/umd-lib v0.0.0-20250814050101-d1f8efa57498/go.mod h1:D9Z7u6RR+lnCxJmGq4LDA8GIHuOsh6WJkl1BjO1G5Hg=
+github.com/vegidio/umd-lib v0.0.0-20250819190422-a3b7d6a476fe h1:jpF54Y0+8mbhCcWcmNpaJ60WAMfUj0QELE+TTKGk7X4=
+github.com/vegidio/umd-lib v0.0.0-20250819190422-a3b7d6a476fe/go.mod h1:D9Z7u6RR+lnCxJmGq4LDA8GIHuOsh6WJkl1BjO1G5Hg=
 github.com/wailsapp/go-webview2 v1.0.21 h1:k3dtoZU4KCoN/AEIbWiPln3P2661GtA2oEgA2Pb+maA=
 github.com/wailsapp/go-webview2 v1.0.21/go.mod h1:qJmWAmAmaniuKGZPWwne+uor3AHMB5PFhqiK0Bbj8kc=
 github.com/wailsapp/mimetype v1.4.1 h1:pQN9ycO7uo4vsUUuPeHEYoUkLVkaRntMnHJxVwYhwHs=
