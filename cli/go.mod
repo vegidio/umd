@@ -11,7 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/vegidio/shared v0.0.0-00010101000000-000000000000
-	github.com/vegidio/umd-lib v0.0.0-20250819190422-a3b7d6a476fe
+	github.com/vegidio/umd-lib v0.0.0-20250909123316-2156ccb1455f
 )
 
 require (
