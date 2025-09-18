@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/vegidio/go-sak/fetch"
+	"github.com/vegidio/go-sak/github"
 )
 
 func main() {
@@ -144,11 +145,11 @@ func main() {
 				return fmt.Errorf("directory path %s is invalid", directory)
 			}
 
-			isOutdated := shared.IsOutdated(shared.Version, "vegidio/umd-app")
+			isOutdated := github.IsOutdatedRelease("vegidio", "umd", shared.Version)
 			if isOutdated {
 				charm.PrintNewVersion(
 					"A new version of UMD is available; please update at:",
-					"https://github.com/vegidio/umd-app/releases",
+					"https://github.com/vegidio/umd/releases",
 				)
 			}
 

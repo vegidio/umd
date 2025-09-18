@@ -21,7 +21,7 @@ There are two ways to use this app: using the GUI or the CLI.
 
 The GUI is the easiest way to use the app, with an intuitive interface that allows you to download media files with just a few clicks. The CLI is more advanced and allows you to download media files in a more automated way.
 
-Both versions are available for Windows, macOS, and Linux. Download the [latest release](https://github.com/vegidio/umd-app/releases) that matches your computer architecture and operating system and follow the instructions below:
+Both versions are available for Windows, macOS, and Linux. Download the [latest release](https://github.com/vegidio/umd/releases) that matches your computer architecture and operating system and follow the instructions below:
 
 ### GUI
 

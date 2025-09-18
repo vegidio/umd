@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dromara/dongle"
-	"github.com/go-resty/resty/v2"
 	"github.com/samber/lo"
 	"github.com/spf13/afero"
 	"github.com/zeebo/blake3"
@@ -18,19 +17,6 @@ var fs = afero.NewOsFs()
 
 type Tag struct {
 	Name string `json:"name"`
-}
-
-func IsOutdated(currentVersion string, repo string) bool {
-	var tags []Tag
-	var url = fmt.Sprintf("https://api.github.com/repos/%s/tags", repo)
-
-	client := resty.New()
-	resp, err := client.R().SetResult(&tags).Get(url)
-	if err != nil || resp.StatusCode() != 200 {
-		return true
-	}
-
-	return currentVersion != tags[0].Name
 }
 
 func CreateReport(directory string, downloads []Download) {

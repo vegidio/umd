@@ -14,7 +14,7 @@ const action = () => (
         color="inherit"
         size="small"
         endIcon={<DownloadIcon />}
-        onClick={() => BrowserOpenURL('https://github.com/vegidio/umd-app/releases')}
+        onClick={() => BrowserOpenURL('https://github.com/vegidio/umd/releases')}
     >
         Download
     </Button>

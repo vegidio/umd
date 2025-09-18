@@ -29,7 +29,7 @@ UMD (Universal Media Downloader) is an application for downloading media files f
 The project is organized into the following key directories:
 
 ```
-umd-app/
+umd/
 ├── cli/            # CLI implementation
 ├── gui/            # GUI implementation
 │   └── frontend/   # Web-based frontend (React/TypeScript)

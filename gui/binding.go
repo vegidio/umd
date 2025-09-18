@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/vegidio/go-sak/fetch"
+	"github.com/vegidio/go-sak/github"
 	"github.com/vegidio/umd"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -165,7 +166,7 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 }
 
 func (a *App) IsOutdated() bool {
-	return shared.IsOutdated(shared.Version, "vegidio/umd-app")
+	return github.IsOutdatedRelease("vegidio", "umd", shared.Version)
 }
 
 func (a *App) GetHomeDirectory() string {
