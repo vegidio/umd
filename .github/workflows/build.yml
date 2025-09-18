@@ -16,7 +16,7 @@ jobs:
     steps:
       # The `fetch-depth: 0` is important to fetch all the tags
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -33,17 +33,17 @@ jobs:
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Install Wails
         run: |
@@ -73,17 +73,17 @@ jobs:
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Install Wails
         run: |
@@ -113,17 +113,17 @@ jobs:
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Install Wails
         run: |
@@ -148,17 +148,17 @@ jobs:
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Install Wails
         run: |
@@ -186,7 +186,7 @@ jobs:
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install MSYS2
         uses: msys2/setup-msys2@v2
@@ -199,12 +199,12 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Install Wails
         run: |
@@ -239,7 +239,7 @@ jobs:
     steps:
       # The `fetch-depth: 0` is important to fetch all the tags
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: main
           fetch-depth: 0
@@ -253,7 +253,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Create the changelog
         run: |

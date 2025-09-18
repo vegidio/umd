@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/shared.iml" filepath="$PROJECT_DIR$/shared.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/umd-app.iml" filepath="$PROJECT_DIR$/.idea/umd-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/umd.iml" filepath="$PROJECT_DIR$/.idea/umd.iml" />
     </modules>
   </component>
 </project>

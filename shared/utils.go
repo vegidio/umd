@@ -15,10 +15,6 @@ import (
 
 var fs = afero.NewOsFs()
 
-type Tag struct {
-	Name string `json:"name"`
-}
-
 func CreateReport(directory string, downloads []Download) {
 	filePath := filepath.Join(directory, "_report.md")
 	file, err := fs.Create(filePath)
