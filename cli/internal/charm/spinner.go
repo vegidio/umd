@@ -2,10 +2,11 @@ package charm
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/vegidio/umd-lib"
-	"strings"
+	"github.com/vegidio/umd"
 )
 
 type queryDoneMsg struct{}

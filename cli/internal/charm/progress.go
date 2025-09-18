@@ -2,13 +2,14 @@ package charm
 
 import (
 	"fmt"
+	"shared"
+	"strconv"
+	"time"
+
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/samber/lo"
-	"github.com/vegidio/shared"
-	"github.com/vegidio/umd-lib/fetch"
-	"strconv"
-	"time"
+	"github.com/vegidio/go-sak/fetch"
 )
 
 type tickMsg time.Time

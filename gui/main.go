@@ -2,9 +2,10 @@ package main
 
 import (
 	"embed"
+	"io"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
-	"io"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"

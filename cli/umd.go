@@ -3,12 +3,13 @@ package main
 import (
 	"cli/internal/charm"
 	"fmt"
+	"path/filepath"
+	"shared"
+
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"github.com/vegidio/shared"
-	"github.com/vegidio/umd-lib"
-	"github.com/vegidio/umd-lib/fetch"
-	"path/filepath"
+	"github.com/vegidio/go-sak/fetch"
+	"github.com/vegidio/umd"
 )
 
 func startQuery(

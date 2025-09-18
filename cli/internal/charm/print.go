@@ -2,9 +2,10 @@ package charm
 
 import (
 	"fmt"
-	"github.com/vegidio/umd-lib"
 	"strconv"
 	"strings"
+
+	"github.com/vegidio/umd"
 )
 
 func PrintSite(name string) {

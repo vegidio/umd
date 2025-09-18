@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vegidio/umd-lib/fetch"
+	"github.com/vegidio/go-sak/fetch"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

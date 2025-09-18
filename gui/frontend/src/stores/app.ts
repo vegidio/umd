@@ -1,8 +1,8 @@
 import { immer } from 'zustand/middleware/immer';
 import { create } from 'zustand/react';
-import { fetch, model, shared } from '../../wailsjs/go/models';
-import Media = model.Media;
+import { fetch, types } from '../../wailsjs/go/models';
 import Response = fetch.Response;
+import Media = types.Media;
 
 type AppStore = {
     isCached: boolean;

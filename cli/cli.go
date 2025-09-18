@@ -3,14 +3,15 @@ package main
 import (
 	"cli/internal/charm"
 	"fmt"
+	"io"
+	"os"
+	"shared"
+	"strings"
+
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/vegidio/shared"
-	"github.com/vegidio/umd-lib/fetch"
-	"io"
-	"os"
-	"strings"
+	"github.com/vegidio/go-sak/fetch"
 )
 
 func main() {

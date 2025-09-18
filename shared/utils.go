@@ -2,15 +2,16 @@ package shared
 
 import (
 	"fmt"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/dromara/dongle"
 	"github.com/go-resty/resty/v2"
 	"github.com/samber/lo"
 	"github.com/spf13/afero"
 	"github.com/zeebo/blake3"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var fs = afero.NewOsFs()

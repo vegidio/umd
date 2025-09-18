@@ -1,17 +1,18 @@
 package main
 
 import (
+	"os/user"
+	"path/filepath"
+	"shared"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
-	"github.com/vegidio/shared"
-	"github.com/vegidio/umd-lib"
-	"github.com/vegidio/umd-lib/fetch"
+	"github.com/vegidio/go-sak/fetch"
+	"github.com/vegidio/umd"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"os/user"
-	"path/filepath"
-	"time"
 )
 
 var name string

@@ -2,11 +2,12 @@ package shared
 
 import (
 	"fmt"
-	"github.com/samber/lo"
-	"github.com/vegidio/umd-lib"
-	"github.com/vegidio/umd-lib/fetch"
 	"path/filepath"
 	"time"
+
+	"github.com/samber/lo"
+	"github.com/vegidio/go-sak/fetch"
+	"github.com/vegidio/umd"
 )
 
 var cancelDownloads func()

@@ -20,10 +20,10 @@ import {
 } from '@mui/x-data-grid-premium';
 import { type ReactElement, useState } from 'react';
 import './MediaList.css';
-import { model } from '../../wailsjs/go/models';
+import { types } from '../../wailsjs/go/models';
 import { BrowserOpenURL } from '../../wailsjs/runtime';
 import { useAppStore } from '../stores/app';
-import Media = model.Media;
+import Media = types.Media;
 
 export const MediaList = () => {
     const store = useAppStore();

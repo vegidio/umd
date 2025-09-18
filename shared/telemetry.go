@@ -2,10 +2,11 @@ package shared
 
 import (
 	"context"
-	"github.com/denisbrodbeck/machineid"
-	"github.com/mixpanel/mixpanel-go"
 	"runtime"
 	"strings"
+
+	"github.com/denisbrodbeck/machineid"
+	"github.com/mixpanel/mixpanel-go"
 )
 
 const Version = "<version>"

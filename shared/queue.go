@@ -1,9 +1,10 @@
 package shared
 
 import (
-	"github.com/samber/lo"
-	"github.com/vegidio/umd-lib/fetch"
 	"sync"
+
+	"github.com/samber/lo"
+	"github.com/vegidio/go-sak/fetch"
 )
 
 type Queue struct {

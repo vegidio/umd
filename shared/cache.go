@@ -2,11 +2,12 @@ package shared
 
 import (
 	"encoding/gob"
-	"github.com/spf13/afero"
-	"github.com/vegidio/umd-lib"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/spf13/afero"
+	"github.com/vegidio/umd"
 )
 
 func init() {
