@@ -1,0 +1,86 @@
+# Project information
+site_name: Universal Media Downloader
+site_url: https://vegidio.github.io/umd
+site_author: Vinicius Egidio
+site_description: UMD is an app and Go library to easily extract links from media files hosted on popular websites.
+
+# Repository
+repo_name: vegidio/umd
+repo_url: https://github.com/vegidio/umd
+
+# Copyright
+copyright: Copyright &copy; 2024 <a href="https://vinicius.io" target="_blank">Vinicius Egidio</a>
+
+# Configuration
+theme:
+  name: material
+  features:
+    - announce.dismiss
+    - content.code.annotate
+    - content.code.copy
+    - content.tooltips
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: assets/favicon.png
+  icon:
+    logo: fontawesome/solid/photo-film
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+
+nav:
+  - "Home": index.md
+  - "Installation": installation.md
+  - "Usage": usage.md
+  - "Downloading Files": downloading.md
+  - "Supported Websites": sites.md
+
+extra:
+  social:
+    - icon: octicons/link-16
+      link: https://vinicius.io
+    - icon: fontawesome/brands/github
+      link: https://github.com/vegidio
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/vegidio/

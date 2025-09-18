@@ -1,0 +1,35 @@
+name: docs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Set variables
+        run: |
+          VERSION=$(curl -s "https://api.github.com/repos/$GITHUB_REPOSITORY/tags" | jq -r '.[0].name')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Update templates
+        run: |
+          sed -i "s/{{ version }}/${{ env.VERSION }}/g" docs/installation.md
+
+      - name: Deploy MkDocs
+        run: |
+          pip install mkdocs-material
+          mkdocs gh-deploy --force
