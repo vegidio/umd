@@ -77,8 +77,8 @@ github.com/vegidio/go-sak v0.0.0-20250918020333-026b96fce9b1 h1:ZWPJYaaz7wBDq1Qu
 github.com/vegidio/go-sak v0.0.0-20250918020333-026b96fce9b1/go.mod h1:RYTNwTHZAwXtADFw7mntSBNAKzbIewDLyC5GD1qfQ6g=
 github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887 h1:GjRjolcR3c2UwIjKrJ/uVI6Q0w9Mdva0DKl+Lb+K5PU=
 github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887/go.mod h1:amUjKHQQjnSH4G4S60XE1TSzYTCCMbH4P0vYVthwDN0=
-github.com/wailsapp/go-webview2 v1.0.22 h1:YT61F5lj+GGaat5OB96Aa3b4QA+mybD0Ggq6NZijQ58=
-github.com/wailsapp/go-webview2 v1.0.22/go.mod h1:qJmWAmAmaniuKGZPWwne+uor3AHMB5PFhqiK0Bbj8kc=
+github.com/wailsapp/go-webview2 v1.0.21 h1:k3dtoZU4KCoN/AEIbWiPln3P2661GtA2oEgA2Pb+maA=
+github.com/wailsapp/go-webview2 v1.0.21/go.mod h1:qJmWAmAmaniuKGZPWwne+uor3AHMB5PFhqiK0Bbj8kc=
 github.com/wailsapp/mimetype v1.4.1 h1:pQN9ycO7uo4vsUUuPeHEYoUkLVkaRntMnHJxVwYhwHs=
 github.com/wailsapp/mimetype v1.4.1/go.mod h1:9aV5k31bBOv5z6u+QP8TltzvNGJPmNJD4XlAL3U+j3o=
 github.com/wailsapp/wails/v2 v2.10.2 h1:29U+c5PI4K4hbx8yFbFvwpCuvqK9VgNv8WGobIlKlXk=
