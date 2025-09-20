@@ -79,7 +79,12 @@ func RemoveDuplicates(downloads []Download, onDuplicateDeleted func(download Dow
 	numDeleted := 0
 	remaining := make([]Download, 0)
 
-	duplicates := lo.GroupBy(downloads, func(d Download) string {
+	// Filter out downloads with empty hash before grouping
+	validDownloads := lo.Filter(downloads, func(d Download, _ int) bool {
+		return d.Hash != ""
+	})
+
+	duplicates := lo.GroupBy(validDownloads, func(d Download) string {
 		return d.Hash
 	})
 
@@ -108,11 +113,6 @@ func CreateTimestamp(num int64) string {
 func CreateHashSuffix(str string) string {
 	hash := blake3.Sum256([]byte(str))
 	return dongle.Encode.FromBytes(hash[:]).ByBase62().String()[:4]
-}
-
-func CreateFileHash(bytes []byte) string {
-	hash := blake3.Sum256(bytes)
-	return dongle.Encode.FromBytes(hash[:]).ByBase91().String()
 }
 
 func CalculateETA(total, completed int, elapsed time.Duration) time.Duration {

@@ -7,7 +7,7 @@ require (
 	github.com/samber/lo v1.51.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.15.0
-	github.com/vegidio/go-sak v0.0.0-20250918020333-026b96fce9b1
+	github.com/vegidio/go-sak v0.0.0-20250920205056-700bb2d5bbe0
 	github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887
 	github.com/wailsapp/wails/v2 v2.10.2
 )
@@ -23,6 +23,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jchv/go-winloader v0.0.0-20250406163304-c1995be93bd1 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/labstack/echo/v4 v4.13.4 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/leaanthony/go-ansi-parser v1.6.1 // indirect
@@ -39,6 +40,7 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.21 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
+	github.com/zeebo/blake3 v0.2.4 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/mod v0.27.0 // indirect
 	golang.org/x/net v0.44.0 // indirect

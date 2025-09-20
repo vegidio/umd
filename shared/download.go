@@ -44,14 +44,13 @@ func CancelDownloads() {
 
 func ResponseToDownload(response *fetch.Response) Download {
 	err := response.Error()
-	bytes, _ := response.Bytes()
 
 	return Download{
 		Url:       response.Request.Url,
 		FilePath:  response.Request.FilePath,
 		Error:     err,
 		IsSuccess: err == nil,
-		Hash:      CreateFileHash(bytes),
+		Hash:      response.Hash,
 	}
 }
 

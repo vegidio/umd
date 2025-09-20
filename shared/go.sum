@@ -33,8 +33,8 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/vegidio/go-sak v0.0.0-20250918020333-026b96fce9b1 h1:ZWPJYaaz7wBDq1QuQMYypJBab4rMLQTlgZmxhS+lSN4=
-github.com/vegidio/go-sak v0.0.0-20250918020333-026b96fce9b1/go.mod h1:RYTNwTHZAwXtADFw7mntSBNAKzbIewDLyC5GD1qfQ6g=
+github.com/vegidio/go-sak v0.0.0-20250920205056-700bb2d5bbe0 h1:x85ZhrBFGCCJC1MeyOeFYg3rfiSMt3XH2+BV4bwI1pM=
+github.com/vegidio/go-sak v0.0.0-20250920205056-700bb2d5bbe0/go.mod h1:FP5I7duvwWQtlyHFs/wdBYtdcdq2mPG35H8BINHPf+Y=
 github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887 h1:GjRjolcR3c2UwIjKrJ/uVI6Q0w9Mdva0DKl+Lb+K5PU=
 github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887/go.mod h1:amUjKHQQjnSH4G4S60XE1TSzYTCCMbH4P0vYVthwDN0=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=

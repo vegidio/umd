@@ -22,7 +22,7 @@ func main() {
 	// Create an instance of the app structure
 	app := NewApp()
 
-	// Create application with options
+	// Create an application with options
 	err := wails.Run(&options.App{
 		Title:  "Universal Media Downloader",
 		Width:  960,
