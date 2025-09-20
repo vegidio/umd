@@ -3,6 +3,7 @@ package coomer
 import (
 	"fmt"
 
+	"github.com/samber/lo"
 	"github.com/vegidio/go-sak/fetch"
 	"github.com/vegidio/go-sak/types"
 )
@@ -83,8 +84,38 @@ func getPost(profile Profile, postId string) <-chan types.Result[Response] {
 			return
 		}
 
+		// Check if the post has a revision with more attachments than the current post
+		// If so, fetch the revision and return it instead of the current post
+		biggestRevision := lo.MaxBy(response.Props.Revisions, func(a, b Revision) bool {
+			return len(a.Post.Attachments) > len(b.Post.Attachments)
+		})
+
+		if biggestRevision.Post.RevisionId > 0 && (len(response.Images)+len(response.Videos)) < len(biggestRevision.Post.Attachments) {
+			out <- getRevision(profile, postId, biggestRevision.Post.RevisionId)
+			return
+		}
+
 		out <- types.Result[Response]{Data: response}
 	}()
 
 	return out
+}
+
+func getRevision(profile Profile, postId string, revisionId int) types.Result[Response] {
+	var response ResponseRevision
+	url := fmt.Sprintf(baseUrl+"/api/v1/%s/user/%s/post/%s/revision/%d", profile.Service, profile.Id, postId, revisionId)
+	resp, err := f.GetResult(url, cssHeaders, &response)
+
+	if err != nil {
+		return types.Result[Response]{Err: err}
+	} else if resp.IsError() {
+		return types.Result[Response]{Err: fmt.Errorf("error fetching user '%s' posts %s",
+			profile.Name, resp.Status())}
+	}
+
+	return types.Result[Response]{Data: Response{
+		Post:   response.Post,
+		Images: response.Images,
+		Videos: response.Videos,
+	}}
 }
