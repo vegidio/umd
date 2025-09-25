@@ -4,7 +4,9 @@ import { useAppStore } from '../stores/app';
 
 export const InfoRow = () => {
     const theme = useTheme();
-    const store = useAppStore();
+    const extractorName = useAppStore((state) => state.extractorName);
+    const extractorType = useAppStore((state) => state.extractorType);
+    const extractorTypeName = useAppStore((state) => state.extractorTypeName);
 
     return (
         <Stack
@@ -15,14 +17,14 @@ export const InfoRow = () => {
             sx={{ borderColor: theme.palette.divider, borderWidth: 1, borderStyle: 'solid' }}
         >
             <Typography variant="body2" sx={{ flex: 0.5 }}>
-                Site name: <strong>{store.extractorName || '-'}</strong>
+                Site name: <strong>{extractorName || '-'}</strong>
             </Typography>
 
             <Typography variant="body2" sx={{ flex: 0.5 }}>
                 Source type:{' '}
                 <strong>
-                    {store.extractorType || '-'}
-                    {store.extractorTypeName && ` (${store.extractorTypeName})`}
+                    {extractorType || '-'}
+                    {extractorTypeName && ` (${extractorTypeName})`}
                 </strong>
             </Typography>
         </Stack>

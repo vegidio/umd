@@ -8,7 +8,10 @@ import { useSettingsStore } from '../stores/settings';
 import { DialogSettings } from './DialogSettings';
 
 export const SearchBox = () => {
-    const appStore = useAppStore();
+    const directory = useAppStore((state) => state.directory);
+    const setIsQuerying = useAppStore((state) => state.setIsQuerying);
+    const setMedia = useAppStore((state) => state.setMedia);
+
     const deep = useSettingsStore((state) => state.deepSearch);
     const noCache = useSettingsStore((state) => state.ignoreCache);
     const enableTelemetry = useSettingsStore((state) => state.enableTelemetry);
@@ -32,15 +35,15 @@ export const SearchBox = () => {
     };
 
     const handleQueryClick = async () => {
-        appStore.setIsQuerying(true);
+        setIsQuerying(true);
 
         try {
-            const media = await QueryMedia(url, appStore.directory, limit, deep, noCache, enableTelemetry);
-            appStore.setMedia(media);
+            const media = await QueryMedia(url, directory, limit, deep, noCache, enableTelemetry);
+            setMedia(media);
         } catch (e) {
             enqueueSnackbar('Error querying the media from this URL', { variant: 'error' });
         } finally {
-            appStore.setIsQuerying(false);
+            setIsQuerying(false);
         }
     };
 

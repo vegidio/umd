@@ -32,7 +32,13 @@ type Props = {
 };
 
 export const DialogDownload = ({ open, onClose }: Props) => {
-    const store = useAppStore();
+    const currentDownloads = useAppStore((state) => state.currentDownloads);
+    const directory = useAppStore((state) => state.directory);
+    const downloadedMedia = useAppStore((state) => state.downloadedMedia);
+    const progress = useAppStore((state) => state.progress);
+    const selectedMedia = useAppStore((state) => state.selectedMedia);
+    const setProgress = useAppStore((state) => state.setProgress);
+
     const [isDownloading, setIsDownloading] = useState(true);
     const enableTelemetry = useSettingsStore((state) => state.enableTelemetry);
 
@@ -40,7 +46,7 @@ export const DialogDownload = ({ open, onClose }: Props) => {
     useEffect(() => {
         let mounted = true;
         (async () => {
-            await StartDownload(store.selectedMedia, store.directory, 5, enableTelemetry);
+            await StartDownload(selectedMedia, directory, 5, enableTelemetry);
             setIsDownloading(false);
             enqueueSnackbar('Download completed', { variant: 'success' });
         })();
@@ -51,9 +57,9 @@ export const DialogDownload = ({ open, onClose }: Props) => {
     }, []);
 
     useEffect(() => {
-        const percentage = (store.downloadedMedia * 100) / store.selectedMedia.length;
-        store.setProgress(Number.isNaN(percentage) ? 0 : percentage);
-    }, [store.downloadedMedia, store.selectedMedia, store.setProgress]);
+        const percentage = (downloadedMedia * 100) / selectedMedia.length;
+        setProgress(Number.isNaN(percentage) ? 0 : percentage);
+    }, [downloadedMedia, selectedMedia, setProgress]);
 
     const onCancelDownload = async () => {
         await CancelDownloads();
@@ -95,7 +101,7 @@ export const DialogDownload = ({ open, onClose }: Props) => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {store.currentDownloads.map((response) => {
+                            {currentDownloads.map((response) => {
                                 return (
                                     <TableRow
                                         key={response.Request?.Url}
@@ -126,13 +132,13 @@ export const DialogDownload = ({ open, onClose }: Props) => {
 
                 <Stack direction="row" spacing="1em" alignItems="center" sx={{ marginTop: '2em' }}>
                     <Typography variant="body2" align="left" sx={{ flex: 0.1 }}>
-                        {store.downloadedMedia} / {store.selectedMedia.length}
+                        {downloadedMedia} / {selectedMedia.length}
                     </Typography>
 
-                    <LinearProgress variant="determinate" value={store.progress} sx={{ flex: 0.8 }} />
+                    <LinearProgress variant="determinate" value={progress} sx={{ flex: 0.8 }} />
 
                     <Typography variant="body2" align="right" sx={{ flex: 0.1 }}>
-                        {store.progress.toFixed(1)}%
+                        {progress.toFixed(1)}%
                     </Typography>
                 </Stack>
             </DialogContent>

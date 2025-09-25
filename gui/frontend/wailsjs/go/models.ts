@@ -20,6 +20,7 @@ export namespace fetch {
 	    Size: number;
 	    Downloaded: number;
 	    Progress: number;
+	    Hash: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Response(source);
@@ -32,6 +33,7 @@ export namespace fetch {
 	        this.Size = source["Size"];
 	        this.Downloaded = source["Downloaded"];
 	        this.Progress = source["Progress"];
+	        this.Hash = source["Hash"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

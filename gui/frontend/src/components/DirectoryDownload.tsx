@@ -14,7 +14,11 @@ import { useAppStore } from '../stores/app';
 import { DialogDownload } from './DialogDownload';
 
 export const DirectoryDownload = () => {
-    const store = useAppStore();
+    const directory = useAppStore((state) => state.directory);
+    const media = useAppStore((state) => state.media);
+    const selectedMedia = useAppStore((state) => state.selectedMedia);
+    const setDirectory = useAppStore((state) => state.setDirectory);
+    const setSelectedMedia = useAppStore((state) => state.setSelectedMedia);
 
     const [filter, setFilter] = useState('');
     const [checkboxImage, setCheckboxImage] = useState(false);
@@ -26,12 +30,12 @@ export const DirectoryDownload = () => {
     };
 
     const handleDirectoryChange = (e: ChangeEvent<HTMLInputElement>) => {
-        store.setDirectory(e.target.value);
+        setDirectory(e.target.value);
     };
 
     const handleDirectoryClick = async () => {
-        const newDir = await OpenDirectory(store.directory);
-        store.setDirectory(newDir);
+        const newDir = await OpenDirectory(directory);
+        setDirectory(newDir);
     };
 
     const handleDownloadClick = () => {
@@ -39,16 +43,16 @@ export const DirectoryDownload = () => {
     };
 
     useEffect(() => {
-        const selected = store.media.filter((media) => {
+        const selected = media.filter((m) => {
             return (
-                (filter.length > 0 && media.Url.toLowerCase().includes(filter.toLowerCase())) ||
-                (checkboxImage && media.Type === 0) ||
-                (checkboxVideo && media.Type === 1)
+                (filter.length > 0 && m.Url.toLowerCase().includes(filter.toLowerCase())) ||
+                (checkboxImage && m.Type === 0) ||
+                (checkboxVideo && m.Type === 1)
             );
         });
 
-        store.setSelectedMedia(selected);
-    }, [checkboxImage, checkboxVideo, filter, store.setSelectedMedia, store.media]);
+        setSelectedMedia(selected);
+    }, [checkboxImage, checkboxVideo, filter, setSelectedMedia, media]);
 
     return (
         <>
@@ -107,7 +111,7 @@ export const DirectoryDownload = () => {
                         fullWidth
                         id="directory"
                         label="Save directory"
-                        value={store.directory}
+                        value={directory}
                         size="small"
                         slotProps={{
                             input: {
@@ -127,7 +131,7 @@ export const DirectoryDownload = () => {
                         variant="contained"
                         startIcon={<CloudDownload />}
                         onClick={handleDownloadClick}
-                        disabled={store.selectedMedia.length === 0}
+                        disabled={selectedMedia.length === 0}
                         sx={{ flex: 0.15 }}
                     >
                         Download

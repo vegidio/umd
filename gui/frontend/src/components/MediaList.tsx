@@ -20,13 +20,14 @@ import {
 } from '@mui/x-data-grid-premium';
 import { type ReactElement, useState } from 'react';
 import './MediaList.css';
-import { types } from '../../wailsjs/go/models';
 import { BrowserOpenURL } from '../../wailsjs/runtime';
 import { useAppStore } from '../stores/app';
-import Media = types.Media;
 
 export const MediaList = () => {
-    const store = useAppStore();
+    const isCached = useAppStore((state) => state.isCached);
+    const media = useAppStore((state) => state.media);
+    const selectedMedia = useAppStore((state) => state.selectedMedia);
+    const setSelectedMedia = useAppStore((state) => state.setSelectedMedia);
 
     const columns: GridColDef[] = [
         { field: 'url', headerName: 'URL', flex: 0.65, renderCell: (params) => <LinkCell url={params.value} /> },
@@ -41,17 +42,17 @@ export const MediaList = () => {
         },
     ];
 
-    const rows: GridRowsProp = store.media.map((m, id) => {
+    const rows: GridRowsProp = media.map((m, id) => {
         return { id, url: m.Url, extension: m.Extension, type: m.Type, metadata: m.Metadata };
     });
 
     const handleSelectionChange = (selected: GridRowSelectionModel) => {
-        const selectedMedia = selected.map((s) => store.media[s.valueOf() as number]);
-        store.setSelectedMedia(selectedMedia);
+        const selectedMedia = selected.map((s) => media[s.valueOf() as number]);
+        setSelectedMedia(selectedMedia);
     };
 
-    const handleSelectionModel = (selectedMedia: Media[]): number[] => {
-        return store.selectedMedia.map((media) => store.media.indexOf(media));
+    const handleSelectionModel = (): number[] => {
+        return selectedMedia.map((m) => media.indexOf(m));
     };
 
     return (
@@ -63,10 +64,10 @@ export const MediaList = () => {
             density="compact"
             localeText={{
                 footerRowSelected: (count) => `${count} media selected`,
-                footerTotalRows: <TotalMedia isCached={store.isCached} />,
+                footerTotalRows: <TotalMedia isCached={isCached} />,
                 noRowsLabel: '',
             }}
-            rowSelectionModel={handleSelectionModel(store.selectedMedia)}
+            rowSelectionModel={handleSelectionModel()}
             onRowSelectionModelChange={handleSelectionChange}
         />
     );

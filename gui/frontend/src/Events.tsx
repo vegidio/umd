@@ -5,29 +5,36 @@ import { useAppStore } from './stores/app';
 import Response = fetch.Response;
 
 const Events = () => {
-    const store = useAppStore();
+    const clear = useAppStore((state) => state.clear);
+    const setAmountQuery = useAppStore((state) => state.setAmountQuery);
+    const setCurrentDownloads = useAppStore((state) => state.setCurrentDownloads);
+    const setDownloadedMedia = useAppStore((state) => state.setDownloadedMedia);
+    const setExtractorName = useAppStore((state) => state.setExtractorName);
+    const setExtractorType = useAppStore((state) => state.setExtractorType);
+    const setIsCached = useAppStore((state) => state.setIsCached);
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: this should run only once
     useEffect(() => {
         const unbindOnExtractorFound = EventsOn('OnExtractorFound', (name: string) => {
-            store.clear();
-            store.setExtractorName(name);
+            clear();
+            setExtractorName(name);
         });
 
         const unbindOnExtractorTypeFound = EventsOn('OnExtractorTypeFound', (eType: string, name: string) =>
-            store.setExtractorType(eType, name),
+            setExtractorType(eType, name),
         );
 
         const unbindOnMediaQueried = EventsOn('OnMediaQueried', (amount: number) => {
-            store.setAmountQuery(amount);
+            setAmountQuery(amount);
         });
 
         const unbindOnQueryCompleted = EventsOn('OnQueryCompleted', (_: number, isCached: boolean) => {
-            store.setIsCached(isCached);
+            setIsCached(isCached);
         });
 
         const unbindOnMediaDownloaded = EventsOn('OnMediaDownloaded', (amount: number, responses: Response[]) => {
-            store.setDownloadedMedia(amount);
-            store.setCurrentDownloads(responses);
+            setDownloadedMedia(amount);
+            setCurrentDownloads(responses);
         });
 
         return () => {
@@ -37,7 +44,7 @@ const Events = () => {
             unbindOnQueryCompleted();
             unbindOnMediaDownloaded();
         };
-    });
+    }, []);
 
     return <></>;
 };

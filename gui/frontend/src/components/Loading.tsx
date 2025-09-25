@@ -6,19 +6,21 @@ import { StopQuery } from '../../wailsjs/go/main/App';
 import { useAppStore } from '../stores/app';
 
 export const Loading = () => {
-    const store = useAppStore();
+    const amountQuery = useAppStore((state) => state.amountQuery);
+    const extractorName = useAppStore((state) => state.extractorName);
+    const isQuerying = useAppStore((state) => state.isQuerying);
 
     const handleCancelClick = () => {
         StopQuery();
     };
 
     return (
-        <Backdrop open={store.isQuerying}>
+        <Backdrop open={isQuerying}>
             <Stack id="loading-box" spacing="1em">
-                <CircularProgressWithLabel value={store.amountQuery} />
+                <CircularProgressWithLabel value={amountQuery} />
 
                 <Typography color="textPrimary" variant="body2">
-                    Querying media from <strong>{store.extractorName}</strong>...
+                    Querying media from <strong>{extractorName}</strong>...
                 </Typography>
 
                 <Button variant="contained" startIcon={<Cancel />} onClick={handleCancelClick}>
