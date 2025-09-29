@@ -11,6 +11,8 @@ const (
 	Fapello
 	// Imaglr represents the Imaglr (imaglr.com) extractor type.
 	Imaglr
+	// JpgFish represents the JpgFish (jpg6.su) extractor type.
+	JpgFish
 	// Reddit represents the Reddit (reddit.com) extractor type.
 	Reddit
 	// RedGifs the RedGifs (redgifs.com) extractor type.
@@ -29,6 +31,8 @@ func (e ExtractorType) String() string {
 		return "Fapello"
 	case Imaglr:
 		return "Imaglr"
+	case JpgFish:
+		return "JpgFish"
 	case Kemono:
 		return "Kemono"
 	case Reddit:
