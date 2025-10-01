@@ -26,7 +26,7 @@ type Coomer struct {
 
 func New(url string, metadata types.Metadata, external types.External) types.Extractor {
 	switch {
-	case utils.HasHost(url, "coomer.st") || utils.HasHost(url, "coomer.party"):
+	case utils.HasHost(url, "coomer.party", "coomer.st", "coomer.su"):
 		baseUrl = "https://coomer.st"
 
 		return &Coomer{
@@ -37,7 +37,7 @@ func New(url string, metadata types.Metadata, external types.External) types.Ext
 			services:  "onlyfans|fansly|candfans",
 			external:  external,
 		}
-	case utils.HasHost(url, "kemono.cr") || utils.HasHost(url, "kemono.party"):
+	case utils.HasHost(url, "kemono.party", "kemono.su", "kemono.cr"):
 		baseUrl = "https://kemono.cr"
 
 		return &Coomer{
