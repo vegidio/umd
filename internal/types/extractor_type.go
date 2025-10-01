@@ -13,12 +13,14 @@ const (
 	Imaglr
 	// JpgFish represents the JpgFish (jpg6.su) extractor type.
 	JpgFish
-	// Reddit represents the Reddit (reddit.com) extractor type.
-	Reddit
-	// RedGifs the RedGifs (redgifs.com) extractor type.
-	RedGifs
 	// Kemono the Kemono (kemono.cr) extractor type.
 	Kemono
+	// Reddit represents the Reddit (reddit.com) extractor type.
+	Reddit
+	// RedGifs represents the RedGifs (redgifs.com) extractor type.
+	RedGifs
+	// Saint represents the Saint (saint2.su) extractor type.
+	Saint
 )
 
 func (e ExtractorType) String() string {
@@ -39,6 +41,8 @@ func (e ExtractorType) String() string {
 		return "Reddit"
 	case RedGifs:
 		return "RedGifs"
+	case Saint:
+		return "Saint"
 	}
 
 	return "Unknown"

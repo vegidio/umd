@@ -1,0 +1,187 @@
+package saint
+
+import (
+	"context"
+	"fmt"
+	"regexp"
+	"slices"
+	"strings"
+
+	"github.com/samber/lo"
+	saktypes "github.com/vegidio/go-sak/types"
+	"github.com/vegidio/umd/internal/types"
+	"github.com/vegidio/umd/internal/utils"
+)
+
+type Saint struct {
+	Metadata types.Metadata
+
+	url              string
+	source           types.SourceType
+	responseMetadata types.Metadata
+	external         types.External
+}
+
+func New(url string, metadata types.Metadata, external types.External) types.Extractor {
+	switch {
+	case utils.HasHost(url, "saint.to", "saint2.su"):
+		return &Saint{Metadata: metadata, url: url, external: external}
+	}
+
+	return nil
+}
+
+func (s *Saint) Type() types.ExtractorType {
+	return types.Saint
+}
+
+func (s *Saint) SourceType() (types.SourceType, error) {
+	regexVideo := regexp.MustCompile(`/embed/([^/]+)/?$`)
+
+	var source types.SourceType
+
+	switch {
+	case regexVideo.MatchString(s.url):
+		matches := regexVideo.FindStringSubmatch(s.url)
+		source = SourceVideo{id: matches[1]}
+	}
+
+	if source == nil {
+		return nil, fmt.Errorf("source type not found for URL: %s", s.url)
+	}
+
+	s.source = source
+	return source, nil
+}
+
+func (s *Saint) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
+	var err error
+	ctx, stop := context.WithCancel(context.Background())
+
+	if s.responseMetadata == nil {
+		s.responseMetadata = make(types.Metadata)
+	}
+
+	response := &types.Response{
+		Url:       s.url,
+		Media:     make([]types.Media, 0),
+		Extractor: types.Saint,
+		Metadata:  s.responseMetadata,
+		Done:      make(chan error),
+	}
+
+	go func() {
+		defer close(response.Done)
+
+		if s.source == nil {
+			s.source, err = s.SourceType()
+			if err != nil {
+				response.Done <- err
+				return
+			}
+		}
+
+		mediaCh := s.fetchMedia(s.source, limit, extensions, deep)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			case result, ok := <-mediaCh:
+				if !ok {
+					return
+				}
+
+				if result.Err != nil {
+					response.Done <- result.Err
+					return
+				}
+
+				// Limiting the number of results
+				if utils.MergeMedia(&response.Media, result.Data) >= limit {
+					response.Media = response.Media[:limit]
+					return
+				}
+			}
+		}
+	}()
+
+	return response, stop
+}
+
+// Compile-time assertion to ensure the extractor implements the Extractor interface
+var _ types.Extractor = (*Saint)(nil)
+
+// region - Private methods
+
+func (s *Saint) fetchMedia(
+	source types.SourceType,
+	limit int,
+	extensions []string,
+	_ bool,
+) <-chan saktypes.Result[[]types.Media] {
+	out := make(chan saktypes.Result[[]types.Media])
+
+	go func() {
+		defer close(out)
+		var videos <-chan saktypes.Result[Video]
+
+		switch ss := source.(type) {
+		case SourceVideo:
+			videos = s.fetchVideo(ss)
+		}
+
+		for video := range videos {
+			if video.Err != nil {
+				out <- saktypes.Result[[]types.Media]{Err: video.Err}
+				return
+			}
+
+			media := imageToMedia(video.Data, source.Type())
+
+			// Filter files with certain extensions
+			if len(extensions) > 0 {
+				media = lo.Filter(media, func(m types.Media, _ int) bool {
+					return slices.Contains(extensions, m.Extension)
+				})
+			}
+
+			out <- saktypes.Result[[]types.Media]{Data: media}
+		}
+	}()
+
+	return out
+}
+
+func (s *Saint) fetchVideo(source SourceVideo) <-chan saktypes.Result[Video] {
+	result := make(chan saktypes.Result[Video])
+
+	go func() {
+		defer close(result)
+
+		video, err := getVideo(source.id)
+		if err != nil {
+			result <- saktypes.Result[Video]{Err: err}
+		}
+
+		result <- saktypes.Result[Video]{Data: *video}
+	}()
+
+	return result
+}
+
+// endregion
+
+// region - Private functions
+
+func imageToMedia(video Video, sourceName string) []types.Media {
+	return []types.Media{types.NewMedia(video.Url, types.Saint, map[string]interface{}{
+		"id":      video.Id,
+		"name":    video.Id,
+		"source":  strings.ToLower(sourceName),
+		"created": video.Published,
+	})}
+}
+
+// endregion
