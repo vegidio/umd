@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
     Box,
     Button,
@@ -20,7 +21,6 @@ import {
     Typography,
 } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
 import { CancelDownloads, StartDownload } from '../../wailsjs/go/main/App';
 import { useAppStore } from '../stores/app';
 import { useSettingsStore } from '../stores/settings';

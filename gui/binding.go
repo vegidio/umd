@@ -198,3 +198,21 @@ func (a *App) OpenDirectory(currentDir string) string {
 
 	return directory
 }
+
+func (a *App) OpenCookiesPath(currentPath string) string {
+	exists, _ := afero.DirExists(afero.NewOsFs(), currentPath)
+	if !exists {
+		currentPath = "."
+	}
+
+	filePath, _ := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		DefaultDirectory: currentPath,
+		Title:            "Select a cookies file to load",
+	})
+
+	if filePath == "" {
+		return currentPath
+	}
+
+	return filePath
+}

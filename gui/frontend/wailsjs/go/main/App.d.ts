@@ -20,6 +20,8 @@ export function OnMediaQueried(arg1:number):Promise<void>;
 
 export function OnQueryCompleted(arg1:number,arg2:boolean):Promise<void>;
 
+export function OpenCookiesPath(arg1:string):Promise<string>;
+
 export function OpenDirectory(arg1:string):Promise<string>;
 
 export function QueryMedia(arg1:string,arg2:string,arg3:number,arg4:boolean,arg5:boolean,arg6:boolean):Promise<Array<types.Media>>;

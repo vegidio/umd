@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { fetch } from '../wailsjs/go/models';
 import { EventsOn } from '../wailsjs/runtime';
 import { useAppStore } from './stores/app';
+
 import Response = fetch.Response;
 
 const Events = () => {

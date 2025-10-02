@@ -1,9 +1,8 @@
 import { Backdrop, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
-import './Loading.css';
 import { Cancel } from '@mui/icons-material';
-import React from 'react';
 import { StopQuery } from '../../wailsjs/go/main/App';
 import { useAppStore } from '../stores/app';
+import './Loading.css';
 
 export const Loading = () => {
     const amountQuery = useAppStore((state) => state.amountQuery);

@@ -34,6 +34,10 @@ export function OnQueryCompleted(arg1, arg2) {
   return window['go']['main']['App']['OnQueryCompleted'](arg1, arg2);
 }
 
+export function OpenCookiesPath(arg1) {
+  return window['go']['main']['App']['OpenCookiesPath'](arg1);
+}
+
 export function OpenDirectory(arg1) {
   return window['go']['main']['App']['OpenDirectory'](arg1);
 }

@@ -1,6 +1,6 @@
+import { useEffect } from 'react';
 import { Button, Stack } from '@mui/material';
-import { SnackbarProvider, enqueueSnackbar } from 'notistack';
-import React, { useEffect } from 'react';
+import { enqueueSnackbar, SnackbarProvider } from 'notistack';
 import { GetHomeDirectory, IsOutdated } from '../wailsjs/go/main/App';
 import { DirectoryDownload, InfoRow, Loading, MediaList, SearchBox } from './components';
 import './App.css';

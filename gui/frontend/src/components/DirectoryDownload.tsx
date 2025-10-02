@@ -1,3 +1,5 @@
+import { type ChangeEvent, useEffect, useState } from 'react';
+import { Button, Checkbox, FormControlLabel, InputAdornment, Stack, TextField } from '@mui/material';
 import {
     Checklist,
     CloudDownload,
@@ -7,8 +9,6 @@ import {
     SmartDisplay,
     SmartDisplayOutlined,
 } from '@mui/icons-material';
-import { Button, Checkbox, FormControlLabel, InputAdornment, Stack, TextField } from '@mui/material';
-import React, { type ChangeEvent, useEffect, useState } from 'react';
 import { OpenDirectory } from '../../wailsjs/go/main/App';
 import { useAppStore } from '../stores/app';
 import { DialogDownload } from './DialogDownload';
@@ -27,10 +27,6 @@ export const DirectoryDownload = () => {
 
     const handleFilterChange = (e: ChangeEvent<HTMLInputElement>) => {
         setFilter(e.target.value);
-    };
-
-    const handleDirectoryChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setDirectory(e.target.value);
     };
 
     const handleDirectoryClick = async () => {

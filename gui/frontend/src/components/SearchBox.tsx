@@ -1,7 +1,7 @@
-import { Public, Search, Settings as SettingsIcon } from '@mui/icons-material';
-import { Button, IconButton, InputAdornment, Stack, TextField } from '@mui/material';
-import { enqueueSnackbar } from 'notistack';
 import { type ChangeEvent, useState } from 'react';
+import { Button, IconButton, InputAdornment, Stack, TextField } from '@mui/material';
+import { Public, Search, Settings as SettingsIcon } from '@mui/icons-material';
+import { enqueueSnackbar } from 'notistack';
 import { QueryMedia } from '../../wailsjs/go/main/App';
 import { useAppStore } from '../stores/app';
 import { useSettingsStore } from '../stores/settings';
@@ -40,7 +40,7 @@ export const SearchBox = () => {
         try {
             const media = await QueryMedia(url, directory, limit, deep, noCache, enableTelemetry);
             setMedia(media);
-        } catch (e) {
+        } catch {
             enqueueSnackbar('Error querying the media from this URL', { variant: 'error' });
         } finally {
             setIsQuerying(false);

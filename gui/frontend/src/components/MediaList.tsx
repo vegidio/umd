@@ -1,4 +1,4 @@
-import { ErrorTwoTone, ImageTwoTone, ListAlt, SaveOutlined, SmartDisplayTwoTone } from '@mui/icons-material';
+import { type ReactElement, useState } from 'react';
 import {
     Box,
     IconButton,
@@ -12,13 +12,13 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
+import { ErrorTwoTone, ImageTwoTone, ListAlt, SaveOutlined, SmartDisplayTwoTone } from '@mui/icons-material';
 import {
     DataGridPremium,
     type GridColDef,
     type GridRowSelectionModel,
     type GridRowsProp,
 } from '@mui/x-data-grid-premium';
-import { type ReactElement, useState } from 'react';
 import './MediaList.css';
 import { BrowserOpenURL } from '../../wailsjs/runtime';
 import { useAppStore } from '../stores/app';
