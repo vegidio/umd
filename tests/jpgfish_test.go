@@ -10,7 +10,7 @@ import (
 func TestJpgFish_QueryImage(t *testing.T) {
 	const NumberOfPosts = 1
 
-	extractor, _ := umd.New(nil).FindExtractor("https://jpg6.su/img/NHVlaVI")
+	extractor, _ := umd.New().FindExtractor("https://jpg6.su/img/NHVlaVI")
 	resp, _ := extractor.QueryMedia(99999, nil, true)
 	err := resp.Error()
 
@@ -25,7 +25,7 @@ func TestJpgFish_QueryImage(t *testing.T) {
 func TestJpgFish_QueryImage_LongUrl(t *testing.T) {
 	const NumberOfPosts = 1
 
-	extractor, _ := umd.New(nil).FindExtractor("https://jpg5.su/img/3648x5472-0e9cbce2c2fcab497a943bd192d90da4.NHVlaVI")
+	extractor, _ := umd.New().FindExtractor("https://jpg5.su/img/3648x5472-0e9cbce2c2fcab497a943bd192d90da4.NHVlaVI")
 	resp, _ := extractor.QueryMedia(99999, nil, true)
 	err := resp.Error()
 

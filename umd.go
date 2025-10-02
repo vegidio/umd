@@ -16,6 +16,7 @@ import (
 // Umd represents a Universal Media Downloader instance.
 type Umd struct {
 	metadata types.Metadata
+	headers  map[string]string
 }
 
 // New creates a new instance of Umd.
@@ -25,12 +26,32 @@ type Umd struct {
 //
 // # Returns:
 //   - Umd: A new instance of Umd.
-func New(metadata types.Metadata) Umd {
-	if metadata == nil {
-		metadata = make(Metadata)
-	}
+func New() *Umd {
+	return &Umd{metadata: make(Metadata), headers: nil}
+}
 
-	return Umd{metadata: metadata}
+// WithMetadata sets the metadata for the Umd instance.
+//
+// # Parameters:
+//   - metadata: A map containing metadata information.
+//
+// # Returns:
+//   - Umd: An updated instance of Umd.
+func (u *Umd) WithMetadata(metadata types.Metadata) *Umd {
+	u.metadata = metadata
+	return u
+}
+
+// WithHeaders sets the headers for the Umd instance.
+//
+// # Parameters:
+//   - headers: A map containing header information.
+//
+// # Returns:
+//   - Umd: An updated instance of Umd.
+func (u *Umd) WithHeaders(headers map[string]string) *Umd {
+	u.headers = headers
+	return u
 }
 
 // FindExtractor attempts to find a suitable extractor for the given URL.
@@ -41,7 +62,7 @@ func New(metadata types.Metadata) Umd {
 // # Returns:
 //   - model.Extractor: The extractor instance if found.
 //   - error: An error if no suitable extractor is found.
-func (u Umd) FindExtractor(url string) (types.Extractor, error) {
+func (u *Umd) FindExtractor(url string) (types.Extractor, error) {
 	var extractor types.Extractor
 	extractors := []func(string, types.Metadata, types.External) types.Extractor{
 		coomer.New, fapello.New, imaglr.New, jpgfish.New, reddit.New, redgifs.New, saint.New,

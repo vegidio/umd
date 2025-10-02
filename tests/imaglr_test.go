@@ -15,7 +15,7 @@ func TestImaglr_DownloadVideo(t *testing.T) {
 	filePath := filepath.Join(tmpDir, "video.mp4")
 	defer os.RemoveAll(tmpDir)
 
-	extractor, _ := umd.New(nil).FindExtractor("https://imaglr.com/post/5778297")
+	extractor, _ := umd.New().FindExtractor("https://imaglr.com/post/5778297")
 	resp, _ := extractor.QueryMedia(99999, nil, true)
 	<-resp.Done
 

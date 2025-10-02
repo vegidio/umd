@@ -10,7 +10,7 @@ import (
 func TestSaint_QueryVideo(t *testing.T) {
 	const NumberOfPosts = 1
 
-	extractor, _ := umd.New(nil).FindExtractor("https://saint2.su/embed/P9kEUyTHgJd")
+	extractor, _ := umd.New().FindExtractor("https://saint2.su/embed/P9kEUyTHgJd")
 	resp, _ := extractor.QueryMedia(99999, nil, true)
 	err := resp.Error()
 

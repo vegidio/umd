@@ -28,7 +28,10 @@ func (External) ExpandMedia(media []Media, ignoreHost string, metadata *Metadata
 			sem <- struct{}{}
 
 			if current.Type == types.Unknown && !utils.HasHost(current.Url, ignoreHost) {
-				extractor, err := New(*metadata).FindExtractor(current.Url)
+				extractor, err := New().
+					WithMetadata(*metadata).
+					FindExtractor(current.Url)
+
 				if err != nil {
 					appendResult(&mu, &result, current)
 					return

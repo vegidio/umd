@@ -11,7 +11,7 @@ import (
 func TestKemono_QueryUser(t *testing.T) {
 	const NumberOfPosts = 50
 
-	extractor, _ := umd.New(nil).FindExtractor("https://kemono.cr/patreon/user/4626321")
+	extractor, _ := umd.New().FindExtractor("https://kemono.cr/patreon/user/4626321")
 	resp, _ := extractor.QueryMedia(NumberOfPosts, nil, true)
 	err := resp.Error()
 
@@ -22,7 +22,7 @@ func TestKemono_QueryUser(t *testing.T) {
 }
 
 func TestKemono_QueryPost(t *testing.T) {
-	extractor, _ := umd.New(nil).FindExtractor("https://kemono.cr/patreon/user/4626321/post/122592054")
+	extractor, _ := umd.New().FindExtractor("https://kemono.cr/patreon/user/4626321/post/122592054")
 	resp, _ := extractor.QueryMedia(99999, nil, true)
 	err := resp.Error()
 

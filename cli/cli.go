@@ -113,12 +113,24 @@ func main() {
 				Category:    "Optional:",
 				EnvVars:     []string{"UMD_NO_TELEMETRY"},
 			},
-			&cli.StringFlag{
-				Name:     "cookies",
-				Aliases:  []string{"c"},
-				Usage:    "a file containing cookies used by website",
+			&cli.BoolFlag{
+				Name:     "cookies-auto",
+				Aliases:  []string{"ca"},
+				Value:    false,
+				Usage:    "import cookies from the browser automatically",
 				Category: "Optional:",
-				EnvVars:  []string{"UMD_COOKIES"},
+				EnvVars:  []string{"UMD_COOKIES_AUTO"},
+				Action: func(context *cli.Context, b bool) error {
+					cookies = fetch.GetBrowserCookies("")
+					return nil
+				},
+			},
+			&cli.StringFlag{
+				Name:     "cookies-file",
+				Aliases:  []string{"cf"},
+				Usage:    "import cookies from a file",
+				Category: "Optional:",
+				EnvVars:  []string{"UMD_COOKIES_FILE"},
 				Action: func(context *cli.Context, path string) error {
 					fullPath, err := expandPath(path)
 					if err != nil {
