@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/samber/lo"
 	"github.com/vegidio/go-sak/fetch"
+	saktime "github.com/vegidio/go-sak/time"
 )
 
 type tickMsg time.Time
@@ -115,7 +116,7 @@ func (m *progressModel) View() string {
 	now := time.Now()
 	if now.Sub(m.lastEtaUpdate) >= time.Second {
 		elapsed := time.Since(m.startTime)
-		m.eta = shared.CalculateETA(m.total, m.completed, elapsed)
+		m.eta = saktime.CalculateEta(m.total, m.completed, elapsed)
 		m.lastEtaUpdate = now
 	}
 

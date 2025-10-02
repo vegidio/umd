@@ -19,13 +19,14 @@ type Imaglr struct {
 	url              string
 	source           types.SourceType
 	responseMetadata types.Metadata
+	headers          map[string]string
 	external         types.External
 }
 
-func New(url string, metadata types.Metadata, external types.External) types.Extractor {
+func New(url string, metadata types.Metadata, headers map[string]string, external types.External) types.Extractor {
 	switch {
 	case utils.HasHost(url, "imaglr.com"):
-		return &Imaglr{Metadata: metadata, url: url, external: external}
+		return &Imaglr{Metadata: metadata, url: url, headers: headers, external: external}
 	}
 
 	return nil

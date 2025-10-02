@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dromara/dongle"
 	"github.com/samber/lo"
 	"github.com/spf13/afero"
+	"github.com/vegidio/go-sak/fetch"
 	"github.com/zeebo/blake3"
 )
 
@@ -115,24 +115,6 @@ func CreateHashSuffix(str string) string {
 	return dongle.Encode.FromBytes(hash[:]).ByBase62().String()[:4]
 }
 
-func CalculateETA(total, completed int, elapsed time.Duration) time.Duration {
-	// Validate inputs
-	if total <= 0 || completed <= 0 || elapsed <= 0 {
-		return time.Duration(7 * 24 * time.Hour)
-	}
-
-	// Nothing to do
-	if completed >= total {
-		return 0
-	}
-
-	remaining := total - completed
-	avgPerTask := elapsed / time.Duration(completed)
-	eta := avgPerTask * time.Duration(remaining)
-
-	return eta
-}
-
 func GetMediaType(filePath string) string {
 	lowerExt := strings.TrimPrefix(filepath.Ext(filePath), ".")
 
@@ -144,4 +126,24 @@ func GetMediaType(filePath string) string {
 	default:
 		return "unkwn"
 	}
+}
+
+func GetCookies(cookiesType string, cookiesPath string) ([]fetch.Cookie, error) {
+	cookies := make([]fetch.Cookie, 0)
+
+	switch cookiesType {
+	case "automatic":
+		cookies = fetch.GetBrowserCookies("")
+	case "manual":
+		co, err := fetch.GetFileCookies(cookiesPath)
+		if err == nil {
+			cookies = co
+		}
+	}
+
+	if cookiesType != "disabled" && len(cookies) == 0 {
+		return nil, fmt.Errorf("no cookies found")
+	}
+
+	return cookies, nil
 }

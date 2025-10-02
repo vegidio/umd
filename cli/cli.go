@@ -121,7 +121,12 @@ func main() {
 				Category: "Optional:",
 				EnvVars:  []string{"UMD_COOKIES_AUTO"},
 				Action: func(context *cli.Context, b bool) error {
-					cookies = fetch.GetBrowserCookies("")
+					co, err := shared.GetCookies("automatic", "")
+					if err != nil {
+						return err
+					}
+
+					cookies = co
 					return nil
 				},
 			},
@@ -137,7 +142,7 @@ func main() {
 						return fmt.Errorf("cookies path %s is invalid", path)
 					}
 
-					co, err := fetch.GetFileCookies(fullPath)
+					co, err := shared.GetCookies("manual", fullPath)
 					if err != nil {
 						return err
 					}

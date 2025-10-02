@@ -15,6 +15,8 @@ export const SearchBox = () => {
     const deep = useSettingsStore((state) => state.deepSearch);
     const noCache = useSettingsStore((state) => state.ignoreCache);
     const enableTelemetry = useSettingsStore((state) => state.enableTelemetry);
+    const cookiesType = useSettingsStore((state) => state.cookiesType);
+    const cookiesPath = useSettingsStore((state) => state.cookiesPath);
 
     const [url, setUrl] = useState('');
     const [limit, setLimit] = useState(99_999);
@@ -38,7 +40,17 @@ export const SearchBox = () => {
         setIsQuerying(true);
 
         try {
-            const media = await QueryMedia(url, directory, limit, deep, noCache, enableTelemetry);
+            const media = await QueryMedia(
+                url,
+                directory,
+                limit,
+                deep,
+                noCache,
+                cookiesType,
+                cookiesPath,
+                enableTelemetry,
+            );
+
             setMedia(media);
         } catch {
             enqueueSnackbar('Error querying the media from this URL', { variant: 'error' });

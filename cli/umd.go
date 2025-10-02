@@ -30,7 +30,14 @@ func startQuery(
 	fields["interface"] = "cli"
 	fields["limit"] = limit
 
-	extractor, err := umd.New(nil).FindExtractor(url)
+	headers := map[string]string{
+		"Cookie": fetch.CookiesToHeader(cookies),
+	}
+
+	extractor, err := umd.New().
+		WithHeaders(headers).
+		FindExtractor(url)
+
 	if err != nil {
 		return err
 	}

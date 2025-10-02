@@ -18,18 +18,41 @@ import (
 
 var name string
 var extractorName string
+var cookies []fetch.Cookie
 var mp *shared.MixPanel
 var stop func()
 
-func (a *App) QueryMedia(url string, directory string, limit int, deep bool, noCache bool, enableTelemetry bool) ([]umd.Media, error) {
+func (a *App) QueryMedia(
+	url string,
+	directory string,
+	limit int,
+	deep bool,
+	noCache bool,
+	cookiesType string,
+	cookiesPath string,
+	enableTelemetry bool,
+) ([]umd.Media, error) {
 	var resp *umd.Response
+	var err error
 
 	mp = shared.NewMixPanel(uuid.New().String())
 	fields := make(map[string]any)
 	fields["interface"] = "gui"
 	fields["limit"] = limit
 
-	extractor, err := umd.New(nil).FindExtractor(url)
+	cookies, err = shared.GetCookies(cookiesType, cookiesPath)
+	if err != nil {
+		return nil, err
+	}
+
+	headers := map[string]string{
+		"Cookie": fetch.CookiesToHeader(cookies),
+	}
+
+	extractor, err := umd.New().
+		WithHeaders(headers).
+		FindExtractor(url)
+
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +151,7 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 	}()
 
 	opened := false
-	for response := range shared.DownloadAll(media, fullDir, parallel, make([]fetch.Cookie, 0)) {
+	for response := range shared.DownloadAll(media, fullDir, parallel, cookies) {
 		queue.Add(response)
 
 		if !opened {

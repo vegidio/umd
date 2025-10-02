@@ -24,7 +24,7 @@ export function OpenCookiesPath(arg1:string):Promise<string>;
 
 export function OpenDirectory(arg1:string):Promise<string>;
 
-export function QueryMedia(arg1:string,arg2:string,arg3:number,arg4:boolean,arg5:boolean,arg6:boolean):Promise<Array<types.Media>>;
+export function QueryMedia(arg1:string,arg2:string,arg3:number,arg4:boolean,arg5:boolean,arg6:string,arg7:string,arg8:boolean):Promise<Array<types.Media>>;
 
 export function StartDownload(arg1:Array<types.Media>,arg2:string,arg3:number,arg4:boolean):Promise<Array<shared.Download>>;
 

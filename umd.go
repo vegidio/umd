@@ -64,12 +64,12 @@ func (u *Umd) WithHeaders(headers map[string]string) *Umd {
 //   - error: An error if no suitable extractor is found.
 func (u *Umd) FindExtractor(url string) (types.Extractor, error) {
 	var extractor types.Extractor
-	extractors := []func(string, types.Metadata, types.External) types.Extractor{
+	extractors := []func(string, types.Metadata, map[string]string, types.External) types.Extractor{
 		coomer.New, fapello.New, imaglr.New, jpgfish.New, reddit.New, redgifs.New, saint.New,
 	}
 
 	for _, newExtractor := range extractors {
-		if e := newExtractor(url, u.metadata, External{}); e != nil {
+		if e := newExtractor(url, u.metadata, u.headers, External{}); e != nil {
 			extractor = e
 			break
 		}
