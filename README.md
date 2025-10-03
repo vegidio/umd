@@ -16,6 +16,7 @@ It supports the following sites:
 <br>
 <a href="https://redgifs.com" target="_blank"><img src="https://img.shields.io/badge/RedGifs-764ABC?&style=for-the-badge&logo=codeigniter&logoColor=white"/></a>
 <a href="https://saint2.su" target="_blank"><img src="https://img.shields.io/badge/Saint-6F1212?&style=for-the-badge&logo=codecov&logoColor=white"/></a>
+<a href="https://simpcity.cr" target="_blank"><img src="https://img.shields.io/badge/SimpCity-3CB8C6?&style=for-the-badge&logo=wikiversity&logoColor=white"/></a>
 </p>
 
 ## 🖼️ Usage

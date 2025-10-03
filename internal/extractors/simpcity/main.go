@@ -1,4 +1,4 @@
-package saint
+package simpcity
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/vegidio/umd/internal/utils"
 )
 
-type Saint struct {
+type SimpCity struct {
 	Metadata types.Metadata
 
 	url              string
@@ -25,26 +25,26 @@ type Saint struct {
 
 func New(url string, metadata types.Metadata, headers map[string]string, external types.External) types.Extractor {
 	switch {
-	case utils.HasHost(url, "saint.to", "saint2.su"):
-		return &Saint{Metadata: metadata, url: url, headers: headers, external: external}
+	case utils.HasHost(url, "simpcity.cr"):
+		return &SimpCity{Metadata: metadata, url: url, headers: headers, external: external}
 	}
 
 	return nil
 }
 
-func (s *Saint) Type() types.ExtractorType {
-	return types.Saint
+func (s *SimpCity) Type() types.ExtractorType {
+	return types.SimpCity
 }
 
-func (s *Saint) SourceType() (types.SourceType, error) {
-	regexVideo := regexp.MustCompile(`/embed/([^/]+)/?$`)
+func (s *SimpCity) SourceType() (types.SourceType, error) {
+	regexThread := regexp.MustCompile(`/threads/([^/]+)/?$`)
 
 	var source types.SourceType
 
 	switch {
-	case regexVideo.MatchString(s.url):
-		matches := regexVideo.FindStringSubmatch(s.url)
-		source = SourceVideo{id: matches[1]}
+	case regexThread.MatchString(s.url):
+		matches := regexThread.FindStringSubmatch(s.url)
+		source = SourceThread{id: matches[1]}
 	}
 
 	if source == nil {
@@ -55,7 +55,7 @@ func (s *Saint) SourceType() (types.SourceType, error) {
 	return source, nil
 }
 
-func (s *Saint) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
+func (s *SimpCity) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
 	var err error
 	ctx, stop := context.WithCancel(context.Background())
 
@@ -66,7 +66,7 @@ func (s *Saint) QueryMedia(limit int, extensions []string, deep bool) (*types.Re
 	response := &types.Response{
 		Url:       s.url,
 		Media:     make([]types.Media, 0),
-		Extractor: types.Saint,
+		Extractor: types.SimpCity,
 		Metadata:  s.responseMetadata,
 		Done:      make(chan error),
 	}
@@ -82,7 +82,7 @@ func (s *Saint) QueryMedia(limit int, extensions []string, deep bool) (*types.Re
 			}
 		}
 
-		mediaCh := s.fetchMedia(s.source, limit, extensions, deep)
+		mediaCh := s.fetchMedia(s.source, extensions, deep)
 
 		for {
 			select {
@@ -112,34 +112,38 @@ func (s *Saint) QueryMedia(limit int, extensions []string, deep bool) (*types.Re
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
-var _ types.Extractor = (*Saint)(nil)
+var _ types.Extractor = (*SimpCity)(nil)
 
 // region - Private methods
 
-func (s *Saint) fetchMedia(
+func (s *SimpCity) fetchMedia(
 	source types.SourceType,
-	limit int,
 	extensions []string,
 	_ bool,
 ) <-chan saktypes.Result[[]types.Media] {
 	out := make(chan saktypes.Result[[]types.Media])
 
+	maxPages, exists := s.Metadata[types.SimpCity]["maxPages"].(int)
+	if !exists {
+		maxPages = 0
+	}
+
 	go func() {
 		defer close(out)
-		var videos <-chan saktypes.Result[Video]
+		var posts <-chan saktypes.Result[Post]
 
 		switch ss := source.(type) {
-		case SourceVideo:
-			videos = s.fetchVideo(ss)
+		case SourceThread:
+			posts = getThread(ss.id, maxPages, s.headers)
 		}
 
-		for video := range videos {
-			if video.Err != nil {
-				out <- saktypes.Result[[]types.Media]{Err: video.Err}
+		for post := range posts {
+			if post.Err != nil {
+				out <- saktypes.Result[[]types.Media]{Err: post.Err}
 				return
 			}
 
-			media := imageToMedia(video.Data, source.Type())
+			media := postToMedia(post.Data, source.Type())
 
 			// Filter files with certain extensions
 			if len(extensions) > 0 {
@@ -155,34 +159,28 @@ func (s *Saint) fetchMedia(
 	return out
 }
 
-func (s *Saint) fetchVideo(source SourceVideo) <-chan saktypes.Result[Video] {
-	result := make(chan saktypes.Result[Video])
-
-	go func() {
-		defer close(result)
-		video, err := getVideo(source.id)
-
-		if err != nil {
-			result <- saktypes.Result[Video]{Err: err}
-		} else {
-			result <- saktypes.Result[Video]{Data: *video}
-		}
-	}()
-
-	return result
-}
-
 // endregion
 
 // region - Private functions
 
-func imageToMedia(video Video, sourceName string) []types.Media {
-	return []types.Media{types.NewMedia(video.Url, types.Saint, map[string]interface{}{
-		"id":      video.Id,
-		"name":    video.Id,
-		"source":  strings.ToLower(sourceName),
-		"created": video.Published,
-	})}
+func postToMedia(post Post, sourceName string) []types.Media {
+	media := make([]types.Media, 0)
+
+	attachmentMedia := lo.Map(post.Attachments, func(attachment Attachment, index int) types.Media {
+		newMedia := types.NewMedia(attachment.ThumbUrl, types.SimpCity, map[string]interface{}{
+			"id":      post.Id,
+			"url":     post.Url,
+			"name":    post.Name,
+			"source":  strings.ToLower(sourceName),
+			"created": post.Published,
+		})
+
+		newMedia.Url = attachment.MediaUrl
+		return newMedia
+	})
+
+	media = append(media, attachmentMedia...)
+	return media
 }
 
 // endregion

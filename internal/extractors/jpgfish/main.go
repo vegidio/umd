@@ -164,13 +164,13 @@ func (j *JpgFish) fetchImage(source SourceImage) <-chan saktypes.Result[Image] {
 
 	go func() {
 		defer close(result)
-
 		img, err := getImage(source.id)
+
 		if err != nil {
 			result <- saktypes.Result[Image]{Err: err}
+		} else {
+			result <- saktypes.Result[Image]{Data: *img}
 		}
-
-		result <- saktypes.Result[Image]{Data: *img}
 	}()
 
 	return result

@@ -12,7 +12,7 @@ type Media struct {
 	// Url is the URL of the media.
 	Url string
 
-	// Extension is extension of the media file, derived from the URL.
+	// Extension is the extension of the media file, derived from the URL.
 	Extension string
 
 	// Type is the type of media, determined based on the file extension.

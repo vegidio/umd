@@ -21,6 +21,8 @@ const (
 	RedGifs
 	// Saint represents the Saint (saint2.su) extractor type.
 	Saint
+	// SimpCity represents the SimpCity (simpcity.cr) extractor type.
+	SimpCity
 )
 
 func (e ExtractorType) String() string {
@@ -43,6 +45,8 @@ func (e ExtractorType) String() string {
 		return "RedGifs"
 	case Saint:
 		return "Saint"
+	case SimpCity:
+		return "SimpCity"
 	}
 
 	return "Unknown"

@@ -172,13 +172,13 @@ func (f *Fapello) fetchPost(source SourcePost) <-chan saktypes.Result[Post] {
 		defer close(result)
 
 		link := fmt.Sprintf("https://fapello.com/%s/%s", source.name, source.Id)
-
 		post, err := getPost(link, source.name)
+
 		if err != nil {
 			result <- saktypes.Result[Post]{Err: err}
+		} else {
+			result <- saktypes.Result[Post]{Data: *post}
 		}
-
-		result <- saktypes.Result[Post]{Data: *post}
 	}()
 
 	return result
@@ -198,11 +198,12 @@ func (f *Fapello) fetchModel(source SourceModel, limit int) <-chan saktypes.Resu
 
 		for _, link := range links {
 			post, postErr := getPost(link, source.name)
+
 			if postErr != nil {
 				result <- saktypes.Result[Post]{Err: postErr}
+			} else {
+				result <- saktypes.Result[Post]{Data: *post}
 			}
-
-			result <- saktypes.Result[Post]{Data: *post}
 		}
 	}()
 
