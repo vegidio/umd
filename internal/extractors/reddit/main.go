@@ -21,14 +21,13 @@ type Reddit struct {
 	url              string
 	source           types.SourceType
 	responseMetadata types.Metadata
-	headers          map[string]string
 	external         types.External
 }
 
-func New(url string, metadata types.Metadata, headers map[string]string, external types.External) types.Extractor {
+func New(url string, metadata types.Metadata, external types.External) types.Extractor {
 	switch {
 	case utils.HasHost(url, Host):
-		return &Reddit{Metadata: metadata, url: url, headers: headers, external: external}
+		return &Reddit{Metadata: metadata, url: url, external: external}
 	}
 
 	return nil

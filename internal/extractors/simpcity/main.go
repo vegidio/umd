@@ -19,14 +19,13 @@ type SimpCity struct {
 	url              string
 	source           types.SourceType
 	responseMetadata types.Metadata
-	headers          map[string]string
 	external         types.External
 }
 
-func New(url string, metadata types.Metadata, headers map[string]string, external types.External) types.Extractor {
+func New(url string, metadata types.Metadata, external types.External) types.Extractor {
 	switch {
 	case utils.HasHost(url, "simpcity.cr"):
-		return &SimpCity{Metadata: metadata, url: url, headers: headers, external: external}
+		return &SimpCity{Metadata: metadata, url: url, external: external}
 	}
 
 	return nil
@@ -123,6 +122,12 @@ func (s *SimpCity) fetchMedia(
 ) <-chan saktypes.Result[[]types.Media] {
 	out := make(chan saktypes.Result[[]types.Media])
 
+	headers := make(map[string]string)
+	cookie, exists := s.Metadata[types.SimpCity]["cookie"].(string)
+	if exists {
+		headers["Cookie"] = cookie
+	}
+
 	maxPages, exists := s.Metadata[types.SimpCity]["maxPages"].(int)
 	if !exists {
 		maxPages = 0
@@ -134,7 +139,7 @@ func (s *SimpCity) fetchMedia(
 
 		switch ss := source.(type) {
 		case SourceThread:
-			posts = getThread(ss.id, maxPages, s.headers)
+			posts = getThread(ss.id, maxPages, headers)
 		}
 
 		for post := range posts {
