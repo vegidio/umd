@@ -18,10 +18,8 @@ func DownloadAll(
 	parallel int,
 	cookies []fetch.Cookie,
 ) <-chan *fetch.Response {
-	cookieHeader := fetch.CookiesToHeader(cookies)
-
 	f := fetch.New(map[string]string{
-		"Cookie": cookieHeader,
+		"Cookie": fetch.CookiesToHeader(cookies),
 	}, 10)
 
 	requests := lo.Map(media, func(m umd.Media, _ int) *fetch.Request {

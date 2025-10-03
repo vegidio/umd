@@ -45,13 +45,19 @@ func (a *App) QueryMedia(
 		return nil, err
 	}
 
-	headers := map[string]string{
-		"Cookie": fetch.CookiesToHeader(cookies),
+	u := umd.New()
+
+	if len(cookies) > 0 {
+		metadata := umd.Metadata{
+			umd.SimpCity: map[string]interface{}{
+				"cookie": fetch.CookiesToHeader(cookies),
+			},
+		}
+
+		u = u.WithMetadata(metadata)
 	}
 
-	extractor, err := umd.New().
-		WithHeaders(headers).
-		FindExtractor(url)
+	extractor, err := u.FindExtractor(url)
 
 	if err != nil {
 		return nil, err
