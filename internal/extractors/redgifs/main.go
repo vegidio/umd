@@ -24,13 +24,13 @@ type Redgifs struct {
 	external         types.External
 }
 
-func New(url string, metadata types.Metadata, external types.External) types.Extractor {
+func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "redgifs.com"):
-		return &Redgifs{Metadata: metadata, url: url, external: external}
+		return &Redgifs{Metadata: metadata, url: url, external: external}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (r *Redgifs) Type() types.ExtractorType {

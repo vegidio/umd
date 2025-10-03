@@ -43,7 +43,6 @@ func startQuery(
 	}
 
 	extractor, err := u.FindExtractor(url)
-
 	if err != nil {
 		return err
 	}

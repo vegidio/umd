@@ -22,13 +22,13 @@ type JpgFish struct {
 	external         types.External
 }
 
-func New(url string, metadata types.Metadata, external types.External) types.Extractor {
+func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "jpg5.su", "jpg6.su"):
-		return &JpgFish{Metadata: metadata, url: url, external: external}
+		return &JpgFish{Metadata: metadata, url: url, external: external}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (j *JpgFish) Type() types.ExtractorType {

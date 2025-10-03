@@ -22,13 +22,20 @@ type SimpCity struct {
 	external         types.External
 }
 
-func New(url string, metadata types.Metadata, external types.External) types.Extractor {
+func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "simpcity.cr"):
-		return &SimpCity{Metadata: metadata, url: url, external: external}
+		ext := &SimpCity{Metadata: metadata, url: url, external: external}
+
+		cookie, exists := metadata[types.SimpCity]["cookie"].(string)
+		if !exists || len(cookie) == 0 {
+			return ext, fmt.Errorf("the extractor SimpCity requires cookies")
+		}
+
+		return ext, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (s *SimpCity) Type() types.ExtractorType {

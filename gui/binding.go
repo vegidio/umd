@@ -58,7 +58,6 @@ func (a *App) QueryMedia(
 	}
 
 	extractor, err := u.FindExtractor(url)
-
 	if err != nil {
 		return nil, err
 	}

@@ -1,8 +1,9 @@
-import { type ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 import { Button, IconButton, InputAdornment, Stack, TextField } from '@mui/material';
-import { Public, Search, Settings as SettingsIcon } from '@mui/icons-material';
+import { Cookie, Public, Search, Settings as SettingsIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import { QueryMedia } from '../../wailsjs/go/main/App';
+import { BrowserOpenURL } from '../../wailsjs/runtime';
 import { useAppStore } from '../stores/app';
 import { useSettingsStore } from '../stores/settings';
 import { DialogSettings } from './DialogSettings';
@@ -20,7 +21,22 @@ export const SearchBox = () => {
 
     const [url, setUrl] = useState('');
     const [limit, setLimit] = useState(99_999);
-    const [openSettings, setOpenSettings] = useState(false);
+    const [openSettings, setOpenSettings] = useState(-1);
+
+    const action = useCallback(
+        () => (
+            <Button
+                variant="outlined"
+                color="inherit"
+                size="small"
+                endIcon={<Cookie />}
+                onClick={() => setOpenSettings(1)}
+            >
+                Settings
+            </Button>
+        ),
+        [],
+    );
 
     const handleUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
         setUrl(e.target.value);
@@ -32,7 +48,7 @@ export const SearchBox = () => {
             return;
         }
 
-        const value = Number.parseInt(e.target.value);
+        const value = Number.parseInt(e.target.value, 10);
         setLimit(value < 1 ? 1 : value);
     };
 
@@ -52,8 +68,15 @@ export const SearchBox = () => {
             );
 
             setMedia(media);
-        } catch {
-            enqueueSnackbar('Error querying the media from this URL', { variant: 'error' });
+        } catch (e: any) {
+            if (e.endsWith('cookies')) {
+                enqueueSnackbar(e.replace('the', 'The'), {
+                    variant: 'error',
+                    action,
+                });
+            } else {
+                enqueueSnackbar('Error querying the media from this URL', { variant: 'error' });
+            }
         } finally {
             setIsQuerying(false);
         }
@@ -103,12 +126,14 @@ export const SearchBox = () => {
                     Query
                 </Button>
 
-                <IconButton onClick={() => setOpenSettings(true)}>
+                <IconButton onClick={() => setOpenSettings(0)}>
                     <SettingsIcon />
                 </IconButton>
             </Stack>
 
-            {openSettings && <DialogSettings open={true} onClose={() => setOpenSettings(false)} />}
+            {openSettings !== -1 && (
+                <DialogSettings open={true} onClose={() => setOpenSettings(-1)} tabIndex={openSettings} />
+            )}
         </>
     );
 };

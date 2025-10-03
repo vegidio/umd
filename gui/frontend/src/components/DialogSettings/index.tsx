@@ -7,11 +7,12 @@ import { GeneralSettings } from './GeneralSettings';
 type Props = {
     open: boolean;
     onClose: () => void;
+    tabIndex: number;
 };
 
 export type ChildSave = { save: () => void };
 
-export const DialogSettings = ({ open, onClose }: Props) => {
+export const DialogSettings = ({ open, onClose, tabIndex }: Props) => {
     const generalRef = useRef<ChildSave>(null);
     const cookiesRef = useRef<ChildSave>(null);
 
@@ -49,7 +50,7 @@ export const DialogSettings = ({ open, onClose }: Props) => {
                 <Close />
             </IconButton>
 
-            <TabContent generalRef={generalRef} cookiesRef={cookiesRef} />
+            <TabContent tabIndex={tabIndex} generalRef={generalRef} cookiesRef={cookiesRef} />
             <Divider />
 
             <DialogActions>
@@ -65,12 +66,13 @@ export const DialogSettings = ({ open, onClose }: Props) => {
 };
 
 type TabPanelProps = {
+    tabIndex: number;
     generalRef: RefObject<ChildSave>;
     cookiesRef: RefObject<ChildSave>;
 };
 
-const TabContent = ({ generalRef, cookiesRef }: TabPanelProps) => {
-    const [value, setValue] = useState(0);
+const TabContent = ({ tabIndex, generalRef, cookiesRef }: TabPanelProps) => {
+    const [value, setValue] = useState(tabIndex);
 
     const handleChange = (_: SyntheticEvent, newValue: number) => {
         setValue(newValue);

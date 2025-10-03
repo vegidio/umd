@@ -22,13 +22,13 @@ type Imaglr struct {
 	external         types.External
 }
 
-func New(url string, metadata types.Metadata, external types.External) types.Extractor {
+func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "imaglr.com"):
-		return &Imaglr{Metadata: metadata, url: url, external: external}
+		return &Imaglr{Metadata: metadata, url: url, external: external}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (i *Imaglr) Type() types.ExtractorType {

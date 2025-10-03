@@ -23,13 +23,13 @@ type Fapello struct {
 	external         types.External
 }
 
-func New(url string, metadata types.Metadata, external types.External) types.Extractor {
+func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "fapello.com"):
-		return &Fapello{Metadata: metadata, url: url, external: external}
+		return &Fapello{Metadata: metadata, url: url, external: external}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (f *Fapello) Type() types.ExtractorType {

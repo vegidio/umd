@@ -53,13 +53,17 @@ func (u *Umd) WithMetadata(metadata types.Metadata) *Umd {
 //   - error: An error if no suitable extractor is found.
 func (u *Umd) FindExtractor(url string) (types.Extractor, error) {
 	var extractor types.Extractor
-	extractors := []func(string, types.Metadata, types.External) types.Extractor{
+	extractors := []func(string, types.Metadata, types.External) (types.Extractor, error){
 		coomer.New, fapello.New, imaglr.New, jpgfish.New, reddit.New, redgifs.New, saint.New, simpcity.New,
 	}
 
 	for _, newExtractor := range extractors {
-		if e := newExtractor(url, u.metadata, External{}); e != nil {
-			extractor = e
+		if ext, err := newExtractor(url, u.metadata, External{}); ext != nil {
+			if err != nil {
+				return nil, err
+			}
+
+			extractor = ext
 			break
 		}
 	}
