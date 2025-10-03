@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"os"
 	"testing"
 
 	log "github.com/sirupsen/logrus"
@@ -11,6 +12,10 @@ import (
 )
 
 func TestSimpCity_QueryThread(t *testing.T) {
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		t.Skip("This test doesn't work when executed from GitHub Actions")
+	}
+
 	log.SetLevel(log.DebugLevel)
 	const NumberOfPosts = 183
 
