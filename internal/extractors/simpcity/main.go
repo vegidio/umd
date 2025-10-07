@@ -13,6 +13,8 @@ import (
 	"github.com/vegidio/umd/internal/utils"
 )
 
+const Host = "simpcity.cr"
+
 type SimpCity struct {
 	Metadata types.Metadata
 
@@ -125,7 +127,7 @@ var _ types.Extractor = (*SimpCity)(nil)
 func (s *SimpCity) fetchMedia(
 	source types.SourceType,
 	extensions []string,
-	_ bool,
+	deep bool,
 ) <-chan saktypes.Result[[]types.Media] {
 	out := make(chan saktypes.Result[[]types.Media])
 
@@ -133,6 +135,11 @@ func (s *SimpCity) fetchMedia(
 	cookie, exists := s.Metadata[types.SimpCity]["cookie"].(string)
 	if exists {
 		headers["Cookie"] = cookie
+	}
+
+	startPage, exists := s.Metadata[types.SimpCity]["startPage"].(int)
+	if !exists {
+		startPage = 1
 	}
 
 	maxPages, exists := s.Metadata[types.SimpCity]["maxPages"].(int)
@@ -146,7 +153,7 @@ func (s *SimpCity) fetchMedia(
 
 		switch ss := source.(type) {
 		case SourceThread:
-			posts = getThread(ss.id, maxPages, headers)
+			posts = getThread(ss.id, startPage, maxPages, headers)
 		}
 
 		for post := range posts {
@@ -156,6 +163,9 @@ func (s *SimpCity) fetchMedia(
 			}
 
 			media := postToMedia(post.Data, source.Type())
+			if deep {
+				media = s.external.ExpandMedia(media, Host, &s.responseMetadata, 5)
+			}
 
 			// Filter files with certain extensions
 			if len(extensions) > 0 {

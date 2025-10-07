@@ -3,6 +3,7 @@ package umd
 import (
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
 )
@@ -36,6 +37,10 @@ func (External) ExpandMedia(media []Media, ignoreHost string, metadata *Metadata
 					appendResult(&mu, &result, current)
 					return
 				}
+
+				log.WithFields(log.Fields{
+					"url": current.Url,
+				}).Debug("Expanding media")
 
 				resp, _ := extractor.QueryMedia(1, nil, false)
 				if resp.Error() != nil {

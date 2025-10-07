@@ -14,7 +14,7 @@ import (
 
 const BaseUrl = "https://simpcity.cr"
 
-func getThread(id string, maxPages int, headers map[string]string) <-chan types.Result[Post] {
+func getThread(id string, startPage, maxPages int, headers map[string]string) <-chan types.Result[Post] {
 	out := make(chan types.Result[Post])
 
 	go func() {
@@ -45,12 +45,13 @@ func getThread(id string, maxPages int, headers map[string]string) <-chan types.
 			return
 		}
 
-		if maxPages != 0 && maxPages < pagesNum {
-			pagesNum = maxPages
+		lastPage := startPage + maxPages - 1
+		if lastPage > pagesNum || maxPages == 0 {
+			lastPage = pagesNum
 		}
 
 		// Iterate through all pages
-		for i := 1; i <= pagesNum; i++ {
+		for i := startPage; i <= lastPage; i++ {
 			pageUrl := fmt.Sprintf("%s/page-%d", url, i)
 
 			log.WithFields(log.Fields{
@@ -107,6 +108,8 @@ func parsePost(id, name string, query *goquery.Selection) (*Post, error) {
 	attachments = append(attachments, getAttachBbImageWrapper(query)...)
 	attachments = append(attachments, getAttachBbVideoWrapper(query)...)
 	attachments = append(attachments, getAttachJsLbImage(query)...)
+	attachments = append(attachments, getAttachSaintIFrame(query)...)
+	attachments = append(attachments, getAttachLinkExternal(query)...)
 
 	return &Post{
 		Id:          id,
@@ -210,6 +213,36 @@ func getAttachJsLbImage(query *goquery.Selection) []Attachment {
 		attachments = append(attachments, Attachment{
 			MediaUrl: mediaUrl,
 			ThumbUrl: thumbUrl,
+		})
+	})
+
+	return attachments
+}
+
+func getAttachSaintIFrame(query *goquery.Selection) []Attachment {
+	attachments := make([]Attachment, 0)
+
+	query.Find("iframe.saint-iframe").Each(func(_ int, q *goquery.Selection) {
+		mediaUrl, _ := q.Attr("src")
+
+		attachments = append(attachments, Attachment{
+			MediaUrl: mediaUrl,
+			ThumbUrl: mediaUrl,
+		})
+	})
+
+	return attachments
+}
+
+func getAttachLinkExternal(query *goquery.Selection) []Attachment {
+	attachments := make([]Attachment, 0)
+
+	query.Find("a.link--external").Each(func(_ int, q *goquery.Selection) {
+		mediaUrl, _ := q.Attr("href")
+
+		attachments = append(attachments, Attachment{
+			MediaUrl: mediaUrl,
+			ThumbUrl: mediaUrl,
 		})
 	})
 

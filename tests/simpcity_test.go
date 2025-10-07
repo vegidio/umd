@@ -41,3 +41,35 @@ func TestSimpCity_QueryThread(t *testing.T) {
 	assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
 	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["name"])
 }
+
+func TestSimpCity_QueryThread_Page45(t *testing.T) {
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		t.Skip("This test doesn't work when executed from GitHub Actions")
+	}
+
+	log.SetLevel(log.DebugLevel)
+	const NumberOfPosts = 102
+
+	cookies, _ := fetch.GetFileCookies("/Users/vegidio/Desktop/cookies.txt")
+
+	metadata := umd.Metadata{
+		types.SimpCity: map[string]interface{}{
+			"startPage": 45,
+			"maxPages":  1,
+			"cookie":    fetch.CookiesToHeader(cookies),
+		},
+	}
+
+	extractor, _ := umd.New().
+		WithMetadata(metadata).
+		FindExtractor("https://simpcity.cr/threads/jessica-nigri.9946")
+
+	resp, _ := extractor.QueryMedia(99999, nil, true)
+	err := resp.Error()
+
+	assert.NoError(t, err)
+	assert.Equal(t, NumberOfPosts, len(resp.Media))
+	assert.Equal(t, "https://simp6.selti-delivery.ru/images3/1000010158bb9dba913dcf1953.jpg", resp.Media[0].Url)
+	assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
+	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["name"])
+}
