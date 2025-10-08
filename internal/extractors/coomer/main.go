@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"slices"
 
-	"github.com/samber/lo"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -152,15 +151,15 @@ func (c *Coomer) fetchMedia(
 	source types.SourceType,
 	extensions []string,
 	_ bool,
-) <-chan saktypes.Result[[]types.Media] {
-	out := make(chan saktypes.Result[[]types.Media])
+) <-chan saktypes.Result[types.Media] {
+	out := make(chan saktypes.Result[types.Media])
 
 	sourceValue := reflect.ValueOf(source)
 	serviceField := sourceValue.FieldByName("Service")
 	profile, pErr := getProfile(serviceField.String(), source.Name())
 
 	if pErr != nil {
-		out <- saktypes.Result[[]types.Media]{Err: pErr}
+		out <- saktypes.Result[types.Media]{Err: pErr}
 		return out
 	}
 
@@ -177,56 +176,59 @@ func (c *Coomer) fetchMedia(
 
 		for response := range responses {
 			if response.Err != nil {
-				out <- saktypes.Result[[]types.Media]{Err: response.Err}
+				out <- saktypes.Result[types.Media]{Err: response.Err}
 				return
 			}
 
 			media := c.postToMedia(response.Data, profile.Name)
 
-			// Filter files with certain extensions
-			if len(extensions) > 0 {
-				media = lo.Filter(media, func(m types.Media, _ int) bool {
-					return slices.Contains(extensions, m.Extension)
-				})
-			}
+			for m := range media {
+				// Filter files with certain extensions
+				if len(extensions) > 0 {
+					if slices.Contains(extensions, m.Extension) {
+						out <- saktypes.Result[types.Media]{Data: m}
+						continue
+					}
+				}
 
-			out <- saktypes.Result[[]types.Media]{Data: media}
+				out <- saktypes.Result[types.Media]{Data: m}
+			}
 		}
 	}()
 
 	return out
 }
 
-func (c *Coomer) postToMedia(response Response, name string) []types.Media {
-	media := make([]types.Media, 0)
+func (c *Coomer) postToMedia(response Response, name string) <-chan types.Media {
+	out := make(chan types.Media)
 
-	for _, image := range response.Images {
-		if image.Path != "" {
-			url := image.Server + "/data" + image.Path
-			newMedia := types.NewMedia(url, c.extractor, map[string]interface{}{
-				"source":  response.Post.Service,
-				"name":    name,
-				"created": response.Post.Published.Time,
-			})
+	go func() {
+		defer close(out)
 
-			media = append(media, newMedia)
+		for _, image := range response.Images {
+			if image.Path != "" {
+				url := image.Server + "/data" + image.Path
+				out <- types.NewMedia(url, c.extractor, map[string]interface{}{
+					"source":  response.Post.Service,
+					"name":    name,
+					"created": response.Post.Published.Time,
+				})
+			}
 		}
-	}
 
-	for _, video := range response.Videos {
-		if video.Path != "" {
-			url := video.Server + "/data" + video.Path
-			newMedia := types.NewMedia(url, c.extractor, map[string]interface{}{
-				"source":  response.Post.Service,
-				"name":    name,
-				"created": response.Post.Published.Time,
-			})
-
-			media = append(media, newMedia)
+		for _, video := range response.Videos {
+			if video.Path != "" {
+				url := video.Server + "/data" + video.Path
+				out <- types.NewMedia(url, c.extractor, map[string]interface{}{
+					"source":  response.Post.Service,
+					"name":    name,
+					"created": response.Post.Published.Time,
+				})
+			}
 		}
-	}
+	}()
 
-	return media
+	return out
 }
 
 // endregion

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/samber/lo"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -128,8 +127,8 @@ func (f *Fapello) fetchMedia(
 	limit int,
 	extensions []string,
 	_ bool,
-) <-chan saktypes.Result[[]types.Media] {
-	out := make(chan saktypes.Result[[]types.Media])
+) <-chan saktypes.Result[types.Media] {
+	out := make(chan saktypes.Result[types.Media])
 
 	go func() {
 		defer close(out)
@@ -144,20 +143,23 @@ func (f *Fapello) fetchMedia(
 
 		for post := range posts {
 			if post.Err != nil {
-				out <- saktypes.Result[[]types.Media]{Err: post.Err}
+				out <- saktypes.Result[types.Media]{Err: post.Err}
 				return
 			}
 
 			media := postsToMedia(post.Data, source.Type())
 
-			// Filter files with certain extensions
-			if len(extensions) > 0 {
-				media = lo.Filter(media, func(m types.Media, _ int) bool {
-					return slices.Contains(extensions, m.Extension)
-				})
-			}
+			for m := range media {
+				// Filter files with certain extensions
+				if len(extensions) > 0 {
+					if slices.Contains(extensions, m.Extension) {
+						out <- saktypes.Result[types.Media]{Data: m}
+						continue
+					}
+				}
 
-			out <- saktypes.Result[[]types.Media]{Data: media}
+				out <- saktypes.Result[types.Media]{Data: m}
+			}
 		}
 	}()
 
@@ -213,15 +215,22 @@ func (f *Fapello) fetchModel(source SourceModel, limit int) <-chan saktypes.Resu
 
 // region - Private functions
 
-func postsToMedia(post Post, sourceName string) []types.Media {
-	now := time.Date(1980, time.October, 6, 17, 7, 0, 0, time.UTC)
+func postsToMedia(post Post, sourceName string) <-chan types.Media {
+	out := make(chan types.Media)
 
-	return []types.Media{types.NewMedia(post.Url, types.Fapello, map[string]interface{}{
-		"id":      post.Id,
-		"name":    post.Name,
-		"source":  strings.ToLower(sourceName),
-		"created": now.Add(time.Duration(post.Id*24) * time.Hour),
-	})}
+	go func() {
+		defer close(out)
+		now := time.Date(1980, time.October, 6, 17, 7, 0, 0, time.UTC)
+
+		out <- types.NewMedia(post.Url, types.Fapello, map[string]interface{}{
+			"id":      post.Id,
+			"name":    post.Name,
+			"source":  strings.ToLower(sourceName),
+			"created": now.Add(time.Duration(post.Id*24) * time.Hour),
+		})
+	}()
+
+	return out
 }
 
 // endregion

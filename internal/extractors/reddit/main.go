@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/samber/lo"
+	"github.com/vegidio/go-sak/async"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -136,8 +136,8 @@ func (r *Reddit) fetchMedia(
 	source types.SourceType,
 	extensions []string,
 	deep bool,
-) <-chan saktypes.Result[[]types.Media] {
-	out := make(chan saktypes.Result[[]types.Media])
+) <-chan saktypes.Result[types.Media] {
+	out := make(chan saktypes.Result[types.Media])
 
 	go func() {
 		defer close(out)
@@ -154,42 +154,53 @@ func (r *Reddit) fetchMedia(
 
 		for child := range children {
 			if child.Err != nil {
-				out <- saktypes.Result[[]types.Media]{Err: child.Err}
+				out <- saktypes.Result[types.Media]{Err: child.Err}
 				return
 			}
 
 			media := r.childToMedia(child.Data, source.Type(), source.Name())
 			if deep {
-				media = r.external.ExpandMedia(media, Host, &r.responseMetadata, 5)
-			}
-
-			// Filter files with certain extensions
-			if len(extensions) > 0 {
-				media = lo.Filter(media, func(m types.Media, _ int) bool {
-					return slices.Contains(extensions, m.Extension)
+				media = async.ProcessChannel(media, 5, func(m types.Media) types.Media {
+					return r.external.ExpandMedia(m, Host, &r.responseMetadata)
 				})
 			}
 
-			out <- saktypes.Result[[]types.Media]{Data: media}
+			for m := range media {
+				// Filter files with certain extensions
+				if len(extensions) > 0 {
+					if slices.Contains(extensions, m.Extension) {
+						out <- saktypes.Result[types.Media]{Data: m}
+						continue
+					}
+				}
+
+				out <- saktypes.Result[types.Media]{Data: m}
+			}
 		}
 	}()
 
 	return out
 }
 
-func (r *Reddit) childToMedia(child ChildData, sourceName string, name string) []types.Media {
-	url := child.SecureMedia.RedditVideo.FallbackUrl
-	if url == "" {
-		url = child.Url
-	}
+func (r *Reddit) childToMedia(child ChildData, sourceName string, name string) <-chan types.Media {
+	out := make(chan types.Media)
 
-	newMedia := types.NewMedia(url, types.Reddit, map[string]interface{}{
-		"source":  strings.ToLower(sourceName),
-		"name":    name,
-		"created": child.Created.Time,
-	})
+	go func() {
+		defer close(out)
 
-	return []types.Media{newMedia}
+		url := child.SecureMedia.RedditVideo.FallbackUrl
+		if url == "" {
+			url = child.Url
+		}
+
+		out <- types.NewMedia(url, types.Reddit, map[string]interface{}{
+			"source":  strings.ToLower(sourceName),
+			"name":    name,
+			"created": child.Created.Time,
+		})
+	}()
+
+	return out
 }
 
 // endregion

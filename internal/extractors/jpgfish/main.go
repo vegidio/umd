@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/samber/lo"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -37,6 +36,7 @@ func (j *JpgFish) Type() types.ExtractorType {
 
 func (j *JpgFish) SourceType() (types.SourceType, error) {
 	regexImage := regexp.MustCompile(`/img/([^/]+)/?$`)
+	regexAlbum := regexp.MustCompile(`/a/([^/]+)/?$`)
 	regexUser := regexp.MustCompile(`/([^/]+)/?$`)
 
 	var source types.SourceType
@@ -45,8 +45,11 @@ func (j *JpgFish) SourceType() (types.SourceType, error) {
 	case regexImage.MatchString(j.url):
 		matches := regexImage.FindStringSubmatch(j.url)
 		source = SourceImage{id: matches[1]}
+	case regexAlbum.MatchString(j.url):
+		matches := regexAlbum.FindStringSubmatch(j.url)
+		source = SourceAlbum{id: matches[1]}
 	case regexUser.MatchString(j.url):
-		matches := regexImage.FindStringSubmatch(j.url)
+		matches := regexUser.FindStringSubmatch(j.url)
 		source = SourceUser{name: matches[1]}
 	}
 
@@ -85,7 +88,7 @@ func (j *JpgFish) QueryMedia(limit int, extensions []string, deep bool) (*types.
 			}
 		}
 
-		mediaCh := j.fetchMedia(j.source, limit, extensions, deep)
+		mediaCh := j.fetchMedia(j.source, extensions, deep)
 
 		for {
 			select {
@@ -121,11 +124,10 @@ var _ types.Extractor = (*JpgFish)(nil)
 
 func (j *JpgFish) fetchMedia(
 	source types.SourceType,
-	limit int,
 	extensions []string,
 	_ bool,
-) <-chan saktypes.Result[[]types.Media] {
-	out := make(chan saktypes.Result[[]types.Media])
+) <-chan saktypes.Result[types.Media] {
+	out := make(chan saktypes.Result[types.Media])
 
 	go func() {
 		defer close(out)
@@ -134,24 +136,29 @@ func (j *JpgFish) fetchMedia(
 		switch s := source.(type) {
 		case SourceImage:
 			images = j.fetchImage(s)
+		case SourceAlbum, SourceUser:
+			return
 		}
 
 		for img := range images {
 			if img.Err != nil {
-				out <- saktypes.Result[[]types.Media]{Err: img.Err}
+				out <- saktypes.Result[types.Media]{Err: img.Err}
 				return
 			}
 
 			media := imageToMedia(img.Data, source.Type())
 
-			// Filter files with certain extensions
-			if len(extensions) > 0 {
-				media = lo.Filter(media, func(m types.Media, _ int) bool {
-					return slices.Contains(extensions, m.Extension)
-				})
-			}
+			for m := range media {
+				// Filter files with certain extensions
+				if len(extensions) > 0 {
+					if slices.Contains(extensions, m.Extension) {
+						out <- saktypes.Result[types.Media]{Data: m}
+						continue
+					}
+				}
 
-			out <- saktypes.Result[[]types.Media]{Data: media}
+				out <- saktypes.Result[types.Media]{Data: m}
+			}
 		}
 	}()
 
@@ -179,14 +186,22 @@ func (j *JpgFish) fetchImage(source SourceImage) <-chan saktypes.Result[Image] {
 
 // region - Private functions
 
-func imageToMedia(img Image, sourceName string) []types.Media {
-	return []types.Media{types.NewMedia(img.Url, types.JpgFish, map[string]interface{}{
-		"id":      img.Id,
-		"name":    img.Author,
-		"title":   img.Title,
-		"source":  strings.ToLower(sourceName),
-		"created": img.Published,
-	})}
+func imageToMedia(img Image, sourceName string) <-chan types.Media {
+	out := make(chan types.Media)
+
+	go func() {
+		defer close(out)
+
+		out <- types.NewMedia(img.Url, types.JpgFish, map[string]interface{}{
+			"id":      img.Id,
+			"name":    img.Author,
+			"title":   img.Title,
+			"source":  strings.ToLower(sourceName),
+			"created": img.Published,
+		})
+	}()
+
+	return out
 }
 
 // endregion

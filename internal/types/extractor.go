@@ -1,7 +1,7 @@
 package types
 
 type External interface {
-	ExpandMedia(media []Media, ignoreHost string, metadata *Metadata, parallel int) []Media
+	ExpandMedia(media Media, ignoreHost string, metadata *Metadata) Media
 }
 
 // Extractor defines the interface for extractors.

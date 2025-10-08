@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/vegidio/go-sak/fetch"
@@ -17,7 +18,7 @@ func TestSimpCity_QueryThread(t *testing.T) {
 	}
 
 	log.SetLevel(log.DebugLevel)
-	const NumberOfPosts = 183
+	const NumberOfPosts = 472
 
 	cookies, _ := fetch.GetFileCookies("/Users/vegidio/Desktop/cookies.txt")
 
@@ -67,9 +68,13 @@ func TestSimpCity_QueryThread_Page45(t *testing.T) {
 	resp, _ := extractor.QueryMedia(99999, nil, true)
 	err := resp.Error()
 
+	_, exists := lo.Find(resp.Media, func(m types.Media) bool {
+		return m.Url == "https://simp6.selti-delivery.ru/images3/1000010158bb9dba913dcf1953.jpg"
+	})
+
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfPosts, len(resp.Media))
-	assert.Equal(t, "https://simp6.selti-delivery.ru/images3/1000010158bb9dba913dcf1953.jpg", resp.Media[0].Url)
 	assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
 	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["name"])
+	assert.True(t, exists)
 }

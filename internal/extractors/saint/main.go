@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/samber/lo"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -81,7 +80,7 @@ func (s *Saint) QueryMedia(limit int, extensions []string, deep bool) (*types.Re
 			}
 		}
 
-		mediaCh := s.fetchMedia(s.source, limit, extensions, deep)
+		mediaCh := s.fetchMedia(s.source, extensions, deep)
 
 		for {
 			select {
@@ -117,11 +116,10 @@ var _ types.Extractor = (*Saint)(nil)
 
 func (s *Saint) fetchMedia(
 	source types.SourceType,
-	limit int,
 	extensions []string,
 	_ bool,
-) <-chan saktypes.Result[[]types.Media] {
-	out := make(chan saktypes.Result[[]types.Media])
+) <-chan saktypes.Result[types.Media] {
+	out := make(chan saktypes.Result[types.Media])
 
 	go func() {
 		defer close(out)
@@ -134,20 +132,23 @@ func (s *Saint) fetchMedia(
 
 		for video := range videos {
 			if video.Err != nil {
-				out <- saktypes.Result[[]types.Media]{Err: video.Err}
+				out <- saktypes.Result[types.Media]{Err: video.Err}
 				return
 			}
 
 			media := imageToMedia(video.Data, source.Type())
 
-			// Filter files with certain extensions
-			if len(extensions) > 0 {
-				media = lo.Filter(media, func(m types.Media, _ int) bool {
-					return slices.Contains(extensions, m.Extension)
-				})
-			}
+			for m := range media {
+				// Filter files with certain extensions
+				if len(extensions) > 0 {
+					if slices.Contains(extensions, m.Extension) {
+						out <- saktypes.Result[types.Media]{Data: m}
+						continue
+					}
+				}
 
-			out <- saktypes.Result[[]types.Media]{Data: media}
+				out <- saktypes.Result[types.Media]{Data: m}
+			}
 		}
 	}()
 
@@ -175,13 +176,21 @@ func (s *Saint) fetchVideo(source SourceVideo) <-chan saktypes.Result[Video] {
 
 // region - Private functions
 
-func imageToMedia(video Video, sourceName string) []types.Media {
-	return []types.Media{types.NewMedia(video.Url, types.Saint, map[string]interface{}{
-		"id":      video.Id,
-		"name":    video.Id,
-		"source":  strings.ToLower(sourceName),
-		"created": video.Published,
-	})}
+func imageToMedia(video Video, sourceName string) <-chan types.Media {
+	out := make(chan types.Media)
+
+	go func() {
+		defer close(out)
+
+		out <- types.NewMedia(video.Url, types.Saint, map[string]interface{}{
+			"id":      video.Id,
+			"name":    video.Id,
+			"source":  strings.ToLower(sourceName),
+			"created": video.Published,
+		})
+	}()
+
+	return out
 }
 
 // endregion

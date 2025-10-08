@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/samber/lo"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -121,8 +120,8 @@ func (i *Imaglr) fetchMedia(
 	source types.SourceType,
 	extensions []string,
 	_ bool,
-) <-chan saktypes.Result[[]types.Media] {
-	out := make(chan saktypes.Result[[]types.Media])
+) <-chan saktypes.Result[types.Media] {
+	out := make(chan saktypes.Result[types.Media])
 
 	go func() {
 		defer close(out)
@@ -136,20 +135,23 @@ func (i *Imaglr) fetchMedia(
 		}
 
 		if err != nil {
-			out <- saktypes.Result[[]types.Media]{Err: err}
+			out <- saktypes.Result[types.Media]{Err: err}
 			return
 		}
 
 		media := postsToMedia(posts, source.Name())
 
-		// Filter files with certain extensions
-		if len(extensions) > 0 {
-			media = lo.Filter(media, func(m types.Media, _ int) bool {
-				return slices.Contains(extensions, m.Extension)
-			})
-		}
+		for m := range media {
+			// Filter files with certain extensions
+			if len(extensions) > 0 {
+				if slices.Contains(extensions, m.Extension) {
+					out <- saktypes.Result[types.Media]{Data: m}
+					continue
+				}
+			}
 
-		out <- saktypes.Result[[]types.Media]{Data: media}
+			out <- saktypes.Result[types.Media]{Data: m}
+		}
 	}()
 
 	return out
@@ -169,15 +171,23 @@ func (i *Imaglr) fetchPost(source SourcePost) ([]Post, error) {
 
 // region - Private functions
 
-func postsToMedia(posts []Post, sourceName string) []types.Media {
-	return lo.Map(posts, func(post Post, _ int) types.Media {
-		return types.NewMedia(post.Media, types.Imaglr, map[string]interface{}{
-			"id":      post.Id,
-			"name":    post.Author,
-			"source":  strings.ToLower(sourceName),
-			"created": post.Timestamp,
-		})
-	})
+func postsToMedia(posts []Post, sourceName string) <-chan types.Media {
+	out := make(chan types.Media)
+
+	go func() {
+		defer close(out)
+
+		for _, post := range posts {
+			out <- types.NewMedia(post.Media, types.Imaglr, map[string]interface{}{
+				"id":      post.Id,
+				"name":    post.Author,
+				"source":  strings.ToLower(sourceName),
+				"created": post.Timestamp,
+			})
+		}
+	}()
+
+	return out
 }
 
 // endregion

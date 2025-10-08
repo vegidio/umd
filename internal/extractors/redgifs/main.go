@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
@@ -161,8 +160,8 @@ func (r *Redgifs) fetchMedia(
 	limit int,
 	extensions []string,
 	_ bool,
-) <-chan saktypes.Result[[]types.Media] {
-	out := make(chan saktypes.Result[[]types.Media])
+) <-chan saktypes.Result[types.Media] {
+	out := make(chan saktypes.Result[types.Media])
 
 	go func() {
 		defer close(out)
@@ -170,7 +169,7 @@ func (r *Redgifs) fetchMedia(
 
 		token, err := r.getNewOrSavedToken()
 		if err != nil {
-			out <- saktypes.Result[[]types.Media]{Err: err}
+			out <- saktypes.Result[types.Media]{Err: err}
 			return
 		}
 
@@ -183,20 +182,23 @@ func (r *Redgifs) fetchMedia(
 
 		for gif := range gifs {
 			if gif.Err != nil {
-				out <- saktypes.Result[[]types.Media]{Err: gif.Err}
+				out <- saktypes.Result[types.Media]{Err: gif.Err}
 				return
 			}
 
 			media := videosToMedia(gif.Data, source.Type())
 
-			// Filter files with certain extensions
-			if len(extensions) > 0 {
-				media = lo.Filter(media, func(m types.Media, _ int) bool {
-					return slices.Contains(extensions, m.Extension)
-				})
-			}
+			for m := range media {
+				// Filter files with certain extensions
+				if len(extensions) > 0 {
+					if slices.Contains(extensions, m.Extension) {
+						out <- saktypes.Result[types.Media]{Data: m}
+						continue
+					}
+				}
 
-			out <- saktypes.Result[[]types.Media]{Data: media}
+				out <- saktypes.Result[types.Media]{Data: m}
+			}
 		}
 	}()
 
@@ -263,20 +265,28 @@ func (r *Redgifs) fetchUser(source SourceUser, token string, limit int) <-chan s
 
 // region - Private functions
 
-func videosToMedia(gifs []Gif, sourceName string) []types.Media {
-	return lo.Map(gifs, func(gif Gif, _ int) types.Media {
-		url := gif.Url.Hd
-		if url == "" {
-			url = gif.Url.Sd
-		}
+func videosToMedia(gifs []Gif, sourceName string) <-chan types.Media {
+	out := make(chan types.Media)
 
-		return types.NewMedia(url, types.RedGifs, map[string]interface{}{
-			"name":    gif.Username,
-			"source":  strings.ToLower(sourceName),
-			"created": gif.Created.Time,
-			"id":      gif.Id,
-		})
-	})
+	go func() {
+		defer close(out)
+
+		for _, gif := range gifs {
+			url := gif.Url.Hd
+			if url == "" {
+				url = gif.Url.Sd
+			}
+
+			out <- types.NewMedia(url, types.RedGifs, map[string]interface{}{
+				"name":    gif.Username,
+				"source":  strings.ToLower(sourceName),
+				"created": gif.Created.Time,
+				"id":      gif.Id,
+			})
+		}
+	}()
+
+	return out
 }
 
 // endregion

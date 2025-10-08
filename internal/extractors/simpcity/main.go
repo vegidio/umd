@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/samber/lo"
+	"github.com/vegidio/go-sak/async"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -128,8 +128,8 @@ func (s *SimpCity) fetchMedia(
 	source types.SourceType,
 	extensions []string,
 	deep bool,
-) <-chan saktypes.Result[[]types.Media] {
-	out := make(chan saktypes.Result[[]types.Media])
+) <-chan saktypes.Result[types.Media] {
+	out := make(chan saktypes.Result[types.Media])
 
 	headers := make(map[string]string)
 	cookie, exists := s.Metadata[types.SimpCity]["cookie"].(string)
@@ -158,23 +158,28 @@ func (s *SimpCity) fetchMedia(
 
 		for post := range posts {
 			if post.Err != nil {
-				out <- saktypes.Result[[]types.Media]{Err: post.Err}
+				out <- saktypes.Result[types.Media]{Err: post.Err}
 				return
 			}
 
 			media := postToMedia(post.Data, source.Type())
 			if deep {
-				media = s.external.ExpandMedia(media, Host, &s.responseMetadata, 5)
-			}
-
-			// Filter files with certain extensions
-			if len(extensions) > 0 {
-				media = lo.Filter(media, func(m types.Media, _ int) bool {
-					return slices.Contains(extensions, m.Extension)
+				media = async.ProcessChannel(media, 5, func(m types.Media) types.Media {
+					return s.external.ExpandMedia(m, Host, &s.responseMetadata)
 				})
 			}
 
-			out <- saktypes.Result[[]types.Media]{Data: media}
+			for m := range media {
+				// Filter files with certain extensions
+				if len(extensions) > 0 {
+					if slices.Contains(extensions, m.Extension) {
+						out <- saktypes.Result[types.Media]{Data: m}
+						continue
+					}
+				}
+
+				out <- saktypes.Result[types.Media]{Data: m}
+			}
 		}
 	}()
 
@@ -185,24 +190,27 @@ func (s *SimpCity) fetchMedia(
 
 // region - Private functions
 
-func postToMedia(post Post, sourceName string) []types.Media {
-	media := make([]types.Media, 0)
+func postToMedia(post Post, sourceName string) <-chan types.Media {
+	out := make(chan types.Media)
 
-	attachmentMedia := lo.Map(post.Attachments, func(attachment Attachment, index int) types.Media {
-		newMedia := types.NewMedia(attachment.ThumbUrl, types.SimpCity, map[string]interface{}{
-			"id":      post.Id,
-			"url":     post.Url,
-			"name":    post.Name,
-			"source":  strings.ToLower(sourceName),
-			"created": post.Published,
-		})
+	go func() {
+		defer close(out)
 
-		newMedia.Url = attachment.MediaUrl
-		return newMedia
-	})
+		for _, attachment := range post.Attachments {
+			media := types.NewMedia(attachment.ThumbUrl, types.SimpCity, map[string]interface{}{
+				"id":      post.Id,
+				"url":     post.Url,
+				"name":    post.Name,
+				"source":  strings.ToLower(sourceName),
+				"created": post.Published,
+			})
 
-	media = append(media, attachmentMedia...)
-	return media
+			media.Url = attachment.MediaUrl
+			out <- media
+		}
+	}()
+
+	return out
 }
 
 // endregion

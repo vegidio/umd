@@ -13,6 +13,19 @@ func (s SourceImage) Name() string {
 	return s.id
 }
 
+// SourceAlbum represents an image source type.
+type SourceAlbum struct {
+	id string
+}
+
+func (s SourceAlbum) Type() string {
+	return "Album"
+}
+
+func (s SourceAlbum) Name() string {
+	return s.id
+}
+
 // SourceUser represents a user source type.
 type SourceUser struct {
 	name string

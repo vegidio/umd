@@ -8,7 +8,7 @@ require (
 	github.com/mixpanel/mixpanel-go v1.2.1
 	github.com/samber/lo v1.51.0
 	github.com/spf13/afero v1.15.0
-	github.com/vegidio/go-sak v0.0.0-20251002180217-93aefed66300
+	github.com/vegidio/go-sak v0.0.0-20251008183749-2c9a21e65922
 	github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887
 	github.com/zeebo/blake3 v0.2.4
 )
