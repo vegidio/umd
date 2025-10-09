@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 	"time"
 
@@ -148,18 +147,7 @@ func (f *Fapello) fetchMedia(
 			}
 
 			media := postsToMedia(post.Data, source.Type())
-
-			for m := range media {
-				// Filter files with certain extensions
-				if len(extensions) > 0 {
-					if slices.Contains(extensions, m.Extension) {
-						out <- saktypes.Result[types.Media]{Data: m}
-						continue
-					}
-				}
-
-				out <- saktypes.Result[types.Media]{Data: m}
-			}
+			utils.FilterMedia(media, extensions, out)
 		}
 	}()
 

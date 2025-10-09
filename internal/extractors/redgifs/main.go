@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"regexp"
-	"slices"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -187,18 +186,7 @@ func (r *Redgifs) fetchMedia(
 			}
 
 			media := videosToMedia(gif.Data, source.Type())
-
-			for m := range media {
-				// Filter files with certain extensions
-				if len(extensions) > 0 {
-					if slices.Contains(extensions, m.Extension) {
-						out <- saktypes.Result[types.Media]{Data: m}
-						continue
-					}
-				}
-
-				out <- saktypes.Result[types.Media]{Data: m}
-			}
+			utils.FilterMedia(media, extensions, out)
 		}
 	}()
 

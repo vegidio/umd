@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 
 	"github.com/vegidio/go-sak/async"
@@ -165,17 +164,7 @@ func (r *Reddit) fetchMedia(
 				})
 			}
 
-			for m := range media {
-				// Filter files with certain extensions
-				if len(extensions) > 0 {
-					if slices.Contains(extensions, m.Extension) {
-						out <- saktypes.Result[types.Media]{Data: m}
-						continue
-					}
-				}
-
-				out <- saktypes.Result[types.Media]{Data: m}
-			}
+			utils.FilterMedia(media, extensions, out)
 		}
 	}()
 

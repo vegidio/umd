@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 
 	saktypes "github.com/vegidio/go-sak/types"
@@ -147,18 +146,7 @@ func (j *JpgFish) fetchMedia(
 			}
 
 			media := imageToMedia(img.Data, source.Type())
-
-			for m := range media {
-				// Filter files with certain extensions
-				if len(extensions) > 0 {
-					if slices.Contains(extensions, m.Extension) {
-						out <- saktypes.Result[types.Media]{Data: m}
-						continue
-					}
-				}
-
-				out <- saktypes.Result[types.Media]{Data: m}
-			}
+			utils.FilterMedia(media, extensions, out)
 		}
 	}()
 

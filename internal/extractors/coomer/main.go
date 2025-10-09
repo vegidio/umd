@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
-	"slices"
 
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
@@ -181,18 +180,7 @@ func (c *Coomer) fetchMedia(
 			}
 
 			media := c.postToMedia(response.Data, profile.Name)
-
-			for m := range media {
-				// Filter files with certain extensions
-				if len(extensions) > 0 {
-					if slices.Contains(extensions, m.Extension) {
-						out <- saktypes.Result[types.Media]{Data: m}
-						continue
-					}
-				}
-
-				out <- saktypes.Result[types.Media]{Data: m}
-			}
+			utils.FilterMedia(media, extensions, out)
 		}
 	}()
 
