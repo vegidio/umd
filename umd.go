@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/vegidio/umd/internal/extractors/coomer"
+	"github.com/vegidio/umd/internal/extractors/cyberdrop"
 	"github.com/vegidio/umd/internal/extractors/fapello"
 	"github.com/vegidio/umd/internal/extractors/imaglr"
 	"github.com/vegidio/umd/internal/extractors/jpgfish"
@@ -54,7 +55,15 @@ func (u *Umd) WithMetadata(metadata types.Metadata) *Umd {
 func (u *Umd) FindExtractor(url string) (types.Extractor, error) {
 	var extractor types.Extractor
 	extractors := []func(string, types.Metadata, types.External) (types.Extractor, error){
-		coomer.New, fapello.New, imaglr.New, jpgfish.New, reddit.New, redgifs.New, saint.New, simpcity.New,
+		coomer.New,
+		cyberdrop.New,
+		fapello.New,
+		imaglr.New,
+		jpgfish.New,
+		reddit.New,
+		redgifs.New,
+		saint.New,
+		simpcity.New,
 	}
 
 	for _, newExtractor := range extractors {

@@ -7,6 +7,8 @@ const (
 	Generic ExtractorType = iota
 	// Coomer represents the Coomer (coomer.st) extractor type.
 	Coomer
+	// Cyberdrop represents the Cyberdrop (cyberdrop.me) extractor type.
+	Cyberdrop
 	// Fapello represents the Fapello (fapello.com) extractor type.
 	Fapello
 	// Imaglr represents the Imaglr (imaglr.com) extractor type.
@@ -31,6 +33,8 @@ func (e ExtractorType) String() string {
 		return "Generic"
 	case Coomer:
 		return "Coomer"
+	case Cyberdrop:
+		return "Cyberdrop"
 	case Fapello:
 		return "Fapello"
 	case Imaglr:
