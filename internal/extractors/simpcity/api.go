@@ -125,12 +125,12 @@ func getAttachFilePreviewImage(query *goquery.Selection) []Attachment {
 
 	query.Find("a.file-preview > img").Each(func(_ int, q *goquery.Selection) {
 		mediaUrl, exists := q.ParentFiltered("a").Attr("href")
-		if exists {
+		if exists && !strings.HasPrefix(mediaUrl, "https") {
 			mediaUrl = BaseUrl + mediaUrl
 		}
 
 		thumbUrl, exists := q.Attr("alt")
-		if exists {
+		if exists && !strings.HasPrefix(thumbUrl, "https") {
 			thumbUrl = BaseUrl + "/" + thumbUrl
 		}
 
@@ -163,12 +163,12 @@ func getAttachBbImageWrapper(query *goquery.Selection) []Attachment {
 
 	query.Find("div.bbImageWrapper").Each(func(_ int, q *goquery.Selection) {
 		mediaUrl, exists := q.Attr("data-src")
-		if exists {
+		if exists && !strings.HasPrefix(mediaUrl, "https") {
 			mediaUrl = BaseUrl + mediaUrl
 		}
 
 		thumbUrl, exists := q.Attr("title")
-		if exists {
+		if exists && !strings.HasPrefix(thumbUrl, "https") {
 			thumbUrl = BaseUrl + "/" + thumbUrl
 		}
 
@@ -201,12 +201,12 @@ func getAttachJsLbImage(query *goquery.Selection) []Attachment {
 
 	query.Find("a.js-lbImage").Each(func(_ int, q *goquery.Selection) {
 		mediaUrl, exists := q.Attr("href")
-		if exists {
+		if exists && !strings.HasPrefix(mediaUrl, "https") {
 			mediaUrl = BaseUrl + mediaUrl
 		}
 
 		thumbUrl, exists := q.ChildrenFiltered("img").Attr("alt")
-		if exists {
+		if exists && !strings.HasPrefix(thumbUrl, "https") {
 			thumbUrl = BaseUrl + "/" + thumbUrl
 		}
 
