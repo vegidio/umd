@@ -1,15 +1,15 @@
 package bunkr
 
-// SourceImage represents a image source type.
-type SourceImage struct {
+// SourceMedia represents a media source type.
+type SourceMedia struct {
 	id string
 }
 
-func (s SourceImage) Type() string {
-	return "Image"
+func (s SourceMedia) Type() string {
+	return "Media"
 }
 
-func (s SourceImage) Name() string {
+func (s SourceMedia) Name() string {
 	return s.id
 }
 

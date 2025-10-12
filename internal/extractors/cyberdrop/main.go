@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -30,10 +29,6 @@ func New(url string, metadata types.Metadata, external types.External) (types.Ex
 	return nil, nil
 }
 
-func (c *Cyberdrop) Fetch(headers map[string]string) *fetch.Fetch {
-	return fetch.New(headers, 10)
-}
-
 func (c *Cyberdrop) Type() types.ExtractorType {
 	return types.Cyberdrop
 }
@@ -47,7 +42,7 @@ func (c *Cyberdrop) SourceType() (types.SourceType, error) {
 	switch {
 	case regexImage.MatchString(c.url):
 		matches := regexImage.FindStringSubmatch(c.url)
-		source = SourceImage{id: matches[1]}
+		source = SourceMedia{id: matches[1]}
 	case regexAlbum.MatchString(c.url):
 		matches := regexAlbum.FindStringSubmatch(c.url)
 		source = SourceAlbum{id: matches[1]}
@@ -117,6 +112,10 @@ func (c *Cyberdrop) QueryMedia(limit int, extensions []string, deep bool) (*type
 	return response, stop
 }
 
+func (c *Cyberdrop) DownloadHeaders() map[string]string {
+	return nil
+}
+
 // Compile-time assertion to ensure the extractor implements the Extractor interface
 var _ types.Extractor = (*Cyberdrop)(nil)
 
@@ -134,7 +133,7 @@ func (c *Cyberdrop) fetchMedia(
 		var images <-chan saktypes.Result[Image]
 
 		switch s := source.(type) {
-		case SourceImage:
+		case SourceMedia:
 			images = c.fetchImage(s)
 		case SourceAlbum:
 			images = c.fetchAlbum(s)
@@ -146,7 +145,7 @@ func (c *Cyberdrop) fetchMedia(
 				return
 			}
 
-			media := imageToMedia(img.Data, source.Type())
+			media := c.dataToMedia(img.Data, source.Type())
 			utils.FilterMedia(media, extensions, out)
 		}
 	}()
@@ -154,7 +153,7 @@ func (c *Cyberdrop) fetchMedia(
 	return out
 }
 
-func (c *Cyberdrop) fetchImage(source SourceImage) <-chan saktypes.Result[Image] {
+func (c *Cyberdrop) fetchImage(source SourceMedia) <-chan saktypes.Result[Image] {
 	out := make(chan saktypes.Result[Image])
 
 	go func() {
@@ -197,12 +196,9 @@ func (c *Cyberdrop) fetchAlbum(source SourceAlbum) <-chan saktypes.Result[Image]
 	return out
 }
 
-// endregion
-
-// region - Private functions
-
-func imageToMedia(img Image, sourceName string) <-chan types.Media {
+func (c *Cyberdrop) dataToMedia(img Image, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
+	headers := c.DownloadHeaders()
 
 	go func() {
 		defer close(out)
@@ -213,7 +209,7 @@ func imageToMedia(img Image, sourceName string) <-chan types.Media {
 			"name":    img.Name,
 			"source":  strings.ToLower(sourceName),
 			"created": img.Published,
-		})
+		}, headers)
 
 		media.Url = img.Url
 		out <- media

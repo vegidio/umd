@@ -90,6 +90,7 @@ export namespace types {
 	    Type: number;
 	    Extractor: number;
 	    Metadata: Record<string, any>;
+	    Headers: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new Media(source);
@@ -102,6 +103,7 @@ export namespace types {
 	        this.Type = source["Type"];
 	        this.Extractor = source["Extractor"];
 	        this.Metadata = source["Metadata"];
+	        this.Headers = source["Headers"];
 	    }
 	}
 

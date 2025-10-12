@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -117,8 +116,8 @@ func (j *JpgFish) QueryMedia(limit int, extensions []string, deep bool) (*types.
 	return response, stop
 }
 
-func (j *JpgFish) Fetch(headers map[string]string) *fetch.Fetch {
-	return fetch.New(headers, 10)
+func (j *JpgFish) DownloadHeaders() map[string]string {
+	return nil
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -150,7 +149,7 @@ func (j *JpgFish) fetchMedia(
 				return
 			}
 
-			media := imageToMedia(img.Data, source.Type())
+			media := j.dataToMedia(img.Data, source.Type())
 			utils.FilterMedia(media, extensions, out)
 		}
 	}()
@@ -179,8 +178,9 @@ func (j *JpgFish) fetchImage(source SourceImage) <-chan saktypes.Result[Image] {
 
 // region - Private functions
 
-func imageToMedia(img Image, sourceName string) <-chan types.Media {
+func (j *JpgFish) dataToMedia(img Image, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
+	headers := j.DownloadHeaders()
 
 	go func() {
 		defer close(out)
@@ -191,7 +191,7 @@ func imageToMedia(img Image, sourceName string) <-chan types.Media {
 			"title":   img.Title,
 			"source":  strings.ToLower(sourceName),
 			"created": img.Published,
-		})
+		}, headers)
 	}()
 
 	return out

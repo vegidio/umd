@@ -70,8 +70,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/vegidio/go-sak v0.0.0-20251012080811-f478781d3859 h1:jIooc/H5uIjzrFrwMwT+RC9b7i2dbvKp+wW3Rzb209Q=
-github.com/vegidio/go-sak v0.0.0-20251012080811-f478781d3859/go.mod h1:8cqYZpHC0ayuQ1qWwo23H3ODTOZ9X7ByrFdIA+ONdcQ=
+github.com/vegidio/go-sak v0.0.0-20251012172150-10d690764bea h1:df9YT4AWSAXTlGdTlSJALP21qWKM+BRj30TxNLvIAEI=
+github.com/vegidio/go-sak v0.0.0-20251012172150-10d690764bea/go.mod h1:8cqYZpHC0ayuQ1qWwo23H3ODTOZ9X7ByrFdIA+ONdcQ=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 github.com/zalando/go-keyring v0.2.6 h1:r7Yc3+H+Ux0+M72zacZoItR3UDxeWfKTcabvkI8ua9s=
 github.com/zalando/go-keyring v0.2.6/go.mod h1:2TCrxYrbUNYfNS/Kgy/LSrkSQzZ5UPVH85RwfczwvcI=

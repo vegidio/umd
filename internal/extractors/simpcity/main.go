@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/vegidio/go-sak/async"
-	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -119,17 +118,15 @@ func (s *SimpCity) QueryMedia(limit int, extensions []string, deep bool) (*types
 	return response, stop
 }
 
-func (s *SimpCity) Fetch(headers map[string]string) *fetch.Fetch {
-	if headers == nil {
-		headers = make(map[string]string)
-	}
+func (s *SimpCity) DownloadHeaders() map[string]string {
+	headers := make(map[string]string)
 
 	cookie, exists := s.Metadata[types.SimpCity]["cookie"].(string)
 	if exists {
 		headers["Cookie"] = cookie
 	}
 
-	return fetch.New(headers, 10)
+	return headers
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -175,7 +172,7 @@ func (s *SimpCity) fetchMedia(
 				return
 			}
 
-			media := postToMedia(post.Data, source.Type())
+			media := s.dataToMedia(post.Data, source.Type())
 			if deep {
 				media = async.ProcessChannel(media, 5, func(m types.Media) types.Media {
 					return s.external.ExpandMedia(m, Host, &s.responseMetadata)
@@ -189,12 +186,9 @@ func (s *SimpCity) fetchMedia(
 	return out
 }
 
-// endregion
-
-// region - Private functions
-
-func postToMedia(post Post, sourceName string) <-chan types.Media {
+func (s *SimpCity) dataToMedia(post Post, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
+	headers := s.DownloadHeaders()
 
 	go func() {
 		defer close(out)
@@ -206,7 +200,7 @@ func postToMedia(post Post, sourceName string) <-chan types.Media {
 				"name":    post.Name,
 				"source":  strings.ToLower(sourceName),
 				"created": post.Published,
-			})
+			}, headers)
 
 			media.Url = attachment.MediaUrl
 			out <- media

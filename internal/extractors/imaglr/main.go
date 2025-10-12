@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -111,8 +110,8 @@ func (i *Imaglr) QueryMedia(limit int, extensions []string, deep bool) (*types.R
 	return response, stop
 }
 
-func (i *Imaglr) Fetch(headers map[string]string) *fetch.Fetch {
-	return fetch.New(headers, 10)
+func (i *Imaglr) DownloadHeaders() map[string]string {
+	return nil
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -143,7 +142,7 @@ func (i *Imaglr) fetchMedia(
 			return
 		}
 
-		media := postsToMedia(posts, source.Name())
+		media := i.dataToMedia(posts, source.Name())
 		utils.FilterMedia(media, extensions, out)
 	}()
 
@@ -160,12 +159,9 @@ func (i *Imaglr) fetchPost(source SourcePost) ([]Post, error) {
 	return []Post{*post}, nil
 }
 
-// endregion
-
-// region - Private functions
-
-func postsToMedia(posts []Post, sourceName string) <-chan types.Media {
+func (i *Imaglr) dataToMedia(posts []Post, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
+	headers := i.DownloadHeaders()
 
 	go func() {
 		defer close(out)
@@ -176,7 +172,7 @@ func postsToMedia(posts []Post, sourceName string) <-chan types.Media {
 				"name":    post.Author,
 				"source":  strings.ToLower(sourceName),
 				"created": post.Timestamp,
-			})
+			}, headers)
 		}
 	}()
 

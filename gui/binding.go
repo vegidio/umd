@@ -18,7 +18,6 @@ import (
 
 var name string
 var extractorName string
-var f *fetch.Fetch
 var mp *shared.MixPanel
 var stop func()
 
@@ -62,7 +61,6 @@ func (a *App) QueryMedia(
 		return nil, err
 	}
 
-	f = extractor.Fetch(nil)
 	extractorName = extractor.Type().String()
 	a.OnExtractorFound(extractorName)
 	fields["extractor"] = extractorName
@@ -157,7 +155,7 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 	}()
 
 	opened := false
-	for response := range shared.DownloadAll(media, fullDir, parallel, f) {
+	for response := range shared.DownloadAll(media, fullDir, parallel) {
 		queue.Add(response)
 
 		if !opened {

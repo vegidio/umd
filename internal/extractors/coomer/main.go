@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -142,8 +141,8 @@ func (c *Coomer) QueryMedia(limit int, extensions []string, deep bool) (*types.R
 	return response, stop
 }
 
-func (c *Coomer) Fetch(headers map[string]string) *fetch.Fetch {
-	return fetch.New(headers, 10)
+func (c *Coomer) DownloadHeaders() map[string]string {
+	return nil
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -184,7 +183,7 @@ func (c *Coomer) fetchMedia(
 				return
 			}
 
-			media := c.postToMedia(response.Data, profile.Name)
+			media := c.dataToMedia(response.Data, profile.Name)
 			utils.FilterMedia(media, extensions, out)
 		}
 	}()
@@ -192,8 +191,9 @@ func (c *Coomer) fetchMedia(
 	return out
 }
 
-func (c *Coomer) postToMedia(response Response, name string) <-chan types.Media {
+func (c *Coomer) dataToMedia(response Response, name string) <-chan types.Media {
 	out := make(chan types.Media)
+	headers := c.DownloadHeaders()
 
 	go func() {
 		defer close(out)
@@ -205,7 +205,7 @@ func (c *Coomer) postToMedia(response Response, name string) <-chan types.Media 
 					"source":  response.Post.Service,
 					"name":    name,
 					"created": response.Post.Published.Time,
-				})
+				}, headers)
 			}
 		}
 
@@ -216,7 +216,7 @@ func (c *Coomer) postToMedia(response Response, name string) <-chan types.Media 
 					"source":  response.Post.Service,
 					"name":    name,
 					"created": response.Post.Published.Time,
-				})
+				}, headers)
 			}
 		}
 	}()

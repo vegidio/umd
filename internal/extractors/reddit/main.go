@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/vegidio/go-sak/async"
-	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -127,8 +126,8 @@ func (r *Reddit) QueryMedia(limit int, extensions []string, deep bool) (*types.R
 	return response, stop
 }
 
-func (r *Reddit) Fetch(headers map[string]string) *fetch.Fetch {
-	return fetch.New(headers, 10)
+func (r *Reddit) DownloadHeaders() map[string]string {
+	return nil
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -162,7 +161,7 @@ func (r *Reddit) fetchMedia(
 				return
 			}
 
-			media := r.childToMedia(child.Data, source.Type(), source.Name())
+			media := r.dataToMedia(child.Data, source.Type(), source.Name())
 			if deep {
 				media = async.ProcessChannel(media, 5, func(m types.Media) types.Media {
 					return r.external.ExpandMedia(m, Host, &r.responseMetadata)
@@ -176,8 +175,9 @@ func (r *Reddit) fetchMedia(
 	return out
 }
 
-func (r *Reddit) childToMedia(child ChildData, sourceName string, name string) <-chan types.Media {
+func (r *Reddit) dataToMedia(child ChildData, sourceName string, name string) <-chan types.Media {
 	out := make(chan types.Media)
+	headers := r.DownloadHeaders()
 
 	go func() {
 		defer close(out)
@@ -191,7 +191,7 @@ func (r *Reddit) childToMedia(child ChildData, sourceName string, name string) <
 			"source":  strings.ToLower(sourceName),
 			"name":    name,
 			"created": child.Created.Time,
-		})
+		}, headers)
 	}()
 
 	return out

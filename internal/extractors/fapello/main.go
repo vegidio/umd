@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -117,8 +116,8 @@ func (f *Fapello) QueryMedia(limit int, extensions []string, deep bool) (*types.
 	return response, stop
 }
 
-func (f *Fapello) Fetch(headers map[string]string) *fetch.Fetch {
-	return fetch.New(headers, 10)
+func (f *Fapello) DownloadHeaders() map[string]string {
+	return nil
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -151,7 +150,7 @@ func (f *Fapello) fetchMedia(
 				return
 			}
 
-			media := postsToMedia(post.Data, source.Type())
+			media := f.dataToMedia(post.Data, source.Type())
 			utils.FilterMedia(media, extensions, out)
 		}
 	}()
@@ -204,12 +203,9 @@ func (f *Fapello) fetchModel(source SourceModel, limit int) <-chan saktypes.Resu
 	return result
 }
 
-// endregion
-
-// region - Private functions
-
-func postsToMedia(post Post, sourceName string) <-chan types.Media {
+func (f *Fapello) dataToMedia(post Post, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
+	headers := f.DownloadHeaders()
 
 	go func() {
 		defer close(out)
@@ -220,7 +216,7 @@ func postsToMedia(post Post, sourceName string) <-chan types.Media {
 			"name":    post.Name,
 			"source":  strings.ToLower(sourceName),
 			"created": now.Add(time.Duration(post.Id*24) * time.Hour),
-		})
+		}, headers)
 	}()
 
 	return out

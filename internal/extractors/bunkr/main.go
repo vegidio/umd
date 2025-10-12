@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -46,10 +45,10 @@ func (b *Bunkr) SourceType() (types.SourceType, error) {
 	switch {
 	case regexMedia1.MatchString(b.url):
 		matches := regexMedia1.FindStringSubmatch(b.url)
-		source = SourceImage{id: matches[1]}
+		source = SourceMedia{id: matches[1]}
 	case regexMedia2.MatchString(b.url):
 		matches := regexMedia2.FindStringSubmatch(b.url)
-		source = SourceImage{id: matches[1]}
+		source = SourceMedia{id: matches[1]}
 	case regexAlbum.MatchString(b.url):
 		matches := regexAlbum.FindStringSubmatch(b.url)
 		source = SourceAlbum{id: matches[1]}
@@ -119,13 +118,10 @@ func (b *Bunkr) QueryMedia(limit int, extensions []string, deep bool) (*types.Re
 	return response, stop
 }
 
-func (b *Bunkr) Fetch(headers map[string]string) *fetch.Fetch {
-	if headers == nil {
-		headers = make(map[string]string)
+func (b *Bunkr) DownloadHeaders() map[string]string {
+	return map[string]string{
+		"Referer": "https://bunkr.cr/",
 	}
-
-	headers["Referer"] = "https://bunkr.cr/"
-	return fetch.New(headers, 10)
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -145,7 +141,7 @@ func (b *Bunkr) fetchMedia(
 		var images <-chan saktypes.Result[Image]
 
 		switch s := source.(type) {
-		case SourceImage:
+		case SourceMedia:
 			images = b.fetchImage(s)
 		case SourceAlbum:
 			images = b.fetchAlbum(s)
@@ -157,7 +153,7 @@ func (b *Bunkr) fetchMedia(
 				return
 			}
 
-			media := imageToMedia(img.Data, source.Type())
+			media := b.dataToMedia(img.Data, source.Type())
 			utils.FilterMedia(media, extensions, out)
 		}
 	}()
@@ -165,7 +161,7 @@ func (b *Bunkr) fetchMedia(
 	return out
 }
 
-func (b *Bunkr) fetchImage(source SourceImage) <-chan saktypes.Result[Image] {
+func (b *Bunkr) fetchImage(source SourceMedia) <-chan saktypes.Result[Image] {
 	out := make(chan saktypes.Result[Image])
 
 	go func() {
@@ -208,12 +204,9 @@ func (b *Bunkr) fetchAlbum(source SourceAlbum) <-chan saktypes.Result[Image] {
 	return out
 }
 
-// endregion
-
-// region - Private functions
-
-func imageToMedia(img Image, sourceName string) <-chan types.Media {
+func (b *Bunkr) dataToMedia(img Image, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
+	headers := b.DownloadHeaders()
 
 	go func() {
 		defer close(out)
@@ -223,7 +216,7 @@ func imageToMedia(img Image, sourceName string) <-chan types.Media {
 			"name":    img.Name,
 			"source":  strings.ToLower(sourceName),
 			"created": img.Published,
-		})
+		}, headers)
 	}()
 
 	return out

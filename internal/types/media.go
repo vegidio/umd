@@ -23,6 +23,9 @@ type Media struct {
 
 	// Metadata contains metadata about the media. Default is an empty map.
 	Metadata map[string]interface{}
+
+	// Headers contains the headers required to download the media.
+	Headers map[string]string
 }
 
 func (m Media) String() string {
@@ -30,7 +33,7 @@ func (m Media) String() string {
 		m.Url, m.Extension, m.Type, m.Extractor, m.Metadata)
 }
 
-func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interface{}) Media {
+func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interface{}, headers map[string]string) Media {
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
 		panic("Error parsing URL: " + err.Error())
@@ -50,6 +53,7 @@ func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interf
 		Type:      getType(extension),
 		Extractor: extractor,
 		Metadata:  metadata,
+		Headers:   headers,
 	}
 }
 

@@ -16,11 +16,12 @@ func DownloadAll(
 	media []umd.Media,
 	directory string,
 	parallel int,
-	f *fetch.Fetch,
 ) <-chan *fetch.Response {
+	f := fetch.New(nil, 10)
+
 	requests := lo.Map(media, func(m umd.Media, _ int) *fetch.Request {
 		filePath := CreateFilePath(directory, m)
-		request, _ := f.NewRequest(m.Url, filePath)
+		request, _ := f.NewRequest(m.Url, filePath, m.Headers)
 		return request
 	})
 
