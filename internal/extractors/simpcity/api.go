@@ -120,6 +120,19 @@ func parsePost(id, name string, query *goquery.Selection) (*Post, error) {
 	}, nil
 }
 
+func trimAfterLastSlash(url string) string {
+	if strings.HasSuffix(url, "/") {
+		url = url[:len(url)-1]
+	}
+
+	lastSlash := strings.LastIndex(url, "/")
+	if lastSlash == -1 {
+		return url
+	}
+
+	return url[:lastSlash+1]
+}
+
 func getAttachFilePreviewImage(query *goquery.Selection) []Attachment {
 	attachments := make([]Attachment, 0)
 
@@ -131,7 +144,7 @@ func getAttachFilePreviewImage(query *goquery.Selection) []Attachment {
 
 		thumbUrl, exists := q.Attr("alt")
 		if exists && !strings.HasPrefix(thumbUrl, "https") {
-			thumbUrl = BaseUrl + "/" + thumbUrl
+			thumbUrl = trimAfterLastSlash(mediaUrl) + thumbUrl
 		}
 
 		attachments = append(attachments, Attachment{
@@ -169,7 +182,7 @@ func getAttachBbImageWrapper(query *goquery.Selection) []Attachment {
 
 		thumbUrl, exists := q.Attr("title")
 		if exists && !strings.HasPrefix(thumbUrl, "https") {
-			thumbUrl = BaseUrl + "/" + thumbUrl
+			thumbUrl = trimAfterLastSlash(mediaUrl) + thumbUrl
 		}
 
 		attachments = append(attachments, Attachment{
@@ -207,7 +220,7 @@ func getAttachJsLbImage(query *goquery.Selection) []Attachment {
 
 		thumbUrl, exists := q.ChildrenFiltered("img").Attr("alt")
 		if exists && !strings.HasPrefix(thumbUrl, "https") {
-			thumbUrl = BaseUrl + "/" + thumbUrl
+			thumbUrl = trimAfterLastSlash(mediaUrl) + thumbUrl
 		}
 
 		attachments = append(attachments, Attachment{
