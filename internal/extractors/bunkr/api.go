@@ -44,13 +44,10 @@ func getImage(slug string) (*Image, error) {
 		}
 	}
 
-	fileRegex := regexp.MustCompile(`(-[^.]+)`)
-	fileName := fileRegex.ReplaceAllString(filepath.Base(mediaUrl), "")
-
 	return &Image{
 		Slug:      slug,
-		Name:      fileName,
 		Url:       mediaUrl,
+		Name:      getFilename(mediaUrl),
 		Published: utils.FakeTimestamp(slug),
 	}, nil
 }
@@ -76,6 +73,21 @@ func getAlbum(id string) ([]string, error) {
 	})
 
 	return ids, nil
+}
+
+func getFilename(url string) string {
+	fileRegex := regexp.MustCompile(`(-[^.]+)`)
+
+	matches := fileRegex.FindAllStringIndex(url, -1)
+	if len(matches) == 0 {
+		return filepath.Base(url)
+	}
+
+	// Get the last match indices
+	last := matches[len(matches)-1]
+	result := url[:last[0]] + url[last[1]:]
+
+	return filepath.Base(result)
 }
 
 func decryptUrl(encryptedURL string, timestamp int) (string, error) {

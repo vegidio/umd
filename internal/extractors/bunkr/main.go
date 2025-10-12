@@ -36,14 +36,18 @@ func (b *Bunkr) Type() types.ExtractorType {
 }
 
 func (b *Bunkr) SourceType() (types.SourceType, error) {
-	regexImage := regexp.MustCompile(`/f/([^/]+)/?$`)
+	regexMedia1 := regexp.MustCompile(`/[fv]/([^/]+)/?$`)
+	regexMedia2 := regexp.MustCompile(`cdn.+/([^/]+)/?$`)
 	regexAlbum := regexp.MustCompile(`/a/([^/]+)/?$`)
 
 	var source types.SourceType
 
 	switch {
-	case regexImage.MatchString(b.url):
-		matches := regexImage.FindStringSubmatch(b.url)
+	case regexMedia1.MatchString(b.url):
+		matches := regexMedia1.FindStringSubmatch(b.url)
+		source = SourceImage{id: matches[1]}
+	case regexMedia2.MatchString(b.url):
+		matches := regexMedia2.FindStringSubmatch(b.url)
 		source = SourceImage{id: matches[1]}
 	case regexAlbum.MatchString(b.url):
 		matches := regexAlbum.FindStringSubmatch(b.url)

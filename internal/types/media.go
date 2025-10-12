@@ -56,6 +56,15 @@ func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interf
 // region - Private functions
 
 func getExtension(urStr string) string {
+	// TODO: I hate Bunkr; I need to come up with a better way to handle if a URL is a direct link to a file or
+	//  a link redirecting to something else.
+	if strings.Contains(urStr, "bunkr") &&
+		(strings.Contains(urStr, "//cdn") ||
+			strings.Contains(urStr, "/f/") ||
+			strings.Contains(urStr, "/v/")) {
+		return ""
+	}
+
 	u, err := url.Parse(urStr)
 	if err != nil {
 		panic(err)
