@@ -93,7 +93,8 @@ func startQuery(
 	fields["parallel"] = parallel
 	fields["mediaFound"] = len(resp.Media)
 
-	result := shared.DownloadAll(resp.Media, fullDir, parallel, cookies)
+	f := extractor.Fetch(nil)
+	result := shared.DownloadAll(resp.Media, fullDir, parallel, f)
 	responses, err := charm.StartProgress(result, len(resp.Media))
 	if err != nil {
 		return err

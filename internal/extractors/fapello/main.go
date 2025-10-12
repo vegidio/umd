@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -114,6 +115,10 @@ func (f *Fapello) QueryMedia(limit int, extensions []string, deep bool) (*types.
 	}()
 
 	return response, stop
+}
+
+func (f *Fapello) Fetch(headers map[string]string) *fetch.Fetch {
+	return fetch.New(headers, 10)
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface

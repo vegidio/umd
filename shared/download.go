@@ -16,12 +16,8 @@ func DownloadAll(
 	media []umd.Media,
 	directory string,
 	parallel int,
-	cookies []fetch.Cookie,
+	f *fetch.Fetch,
 ) <-chan *fetch.Response {
-	f := fetch.New(map[string]string{
-		"Cookie": fetch.CookiesToHeader(cookies),
-	}, 10)
-
 	requests := lo.Map(media, func(m umd.Media, _ int) *fetch.Request {
 		filePath := CreateFilePath(directory, m)
 		request, _ := f.NewRequest(m.Url, filePath)

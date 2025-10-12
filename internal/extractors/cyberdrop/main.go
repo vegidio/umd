@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -27,6 +28,10 @@ func New(url string, metadata types.Metadata, external types.External) (types.Ex
 	}
 
 	return nil, nil
+}
+
+func (c *Cyberdrop) Fetch(headers map[string]string) *fetch.Fetch {
+	return fetch.New(headers, 10)
 }
 
 func (c *Cyberdrop) Type() types.ExtractorType {

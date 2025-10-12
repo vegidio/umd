@@ -1,5 +1,7 @@
 package types
 
+import "github.com/vegidio/go-sak/fetch"
+
 type External interface {
 	ExpandMedia(media Media, ignoreHost string, metadata *Metadata) Media
 }
@@ -28,4 +30,10 @@ type Extractor interface {
 	//   - *Response: the Response object.
 	//   - cancelFunc: a function to cancel the ongoing query.
 	QueryMedia(limit int, extensions []string, deep bool) (*Response, func())
+
+	// Fetch returns a fetch.Fetch instance configured to work with the extractor.
+	//
+	// # Parameters:
+	//   - headers: the headers to use with the fetch.Fetch instance.
+	Fetch(headers map[string]string) *fetch.Fetch
 }

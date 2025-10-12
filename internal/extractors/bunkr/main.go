@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -111,6 +112,15 @@ func (b *Bunkr) QueryMedia(limit int, extensions []string, deep bool) (*types.Re
 	}()
 
 	return response, stop
+}
+
+func (b *Bunkr) Fetch(headers map[string]string) *fetch.Fetch {
+	if headers == nil {
+		headers = make(map[string]string)
+	}
+
+	headers["Referer"] = "https://bunkr.cr/"
+	return fetch.New(headers, 10)
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface

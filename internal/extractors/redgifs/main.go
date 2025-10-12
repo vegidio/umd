@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -115,6 +116,10 @@ func (r *Redgifs) QueryMedia(limit int, extensions []string, deep bool) (*types.
 	}()
 
 	return response, stop
+}
+
+func (r *Redgifs) Fetch(headers map[string]string) *fetch.Fetch {
+	return fetch.New(headers, 10)
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface

@@ -186,6 +186,10 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
+		if strings.HasSuffix(err.Error(), "cookies") {
+			err = fmt.Errorf("%s; you must use the flag -ca or -cf", err.Error())
+		}
+
 		charm.PrintError(err.Error())
 	}
 }

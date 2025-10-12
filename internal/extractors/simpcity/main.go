@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/vegidio/go-sak/async"
+	"github.com/vegidio/go-sak/fetch"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
 	"github.com/vegidio/umd/internal/utils"
@@ -116,6 +117,19 @@ func (s *SimpCity) QueryMedia(limit int, extensions []string, deep bool) (*types
 	}()
 
 	return response, stop
+}
+
+func (s *SimpCity) Fetch(headers map[string]string) *fetch.Fetch {
+	if headers == nil {
+		headers = make(map[string]string)
+	}
+
+	cookie, exists := s.Metadata[types.SimpCity]["cookie"].(string)
+	if exists {
+		headers["Cookie"] = cookie
+	}
+
+	return fetch.New(headers, 10)
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface

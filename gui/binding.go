@@ -18,7 +18,7 @@ import (
 
 var name string
 var extractorName string
-var cookies []fetch.Cookie
+var f *fetch.Fetch
 var mp *shared.MixPanel
 var stop func()
 
@@ -40,7 +40,7 @@ func (a *App) QueryMedia(
 	fields["interface"] = "gui"
 	fields["limit"] = limit
 
-	cookies, err = shared.GetCookies(cookiesType, cookiesPath)
+	cookies, err := shared.GetCookies(cookiesType, cookiesPath)
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +62,7 @@ func (a *App) QueryMedia(
 		return nil, err
 	}
 
+	f = extractor.Fetch(nil)
 	extractorName = extractor.Type().String()
 	a.OnExtractorFound(extractorName)
 	fields["extractor"] = extractorName
@@ -156,7 +157,7 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 	}()
 
 	opened := false
-	for response := range shared.DownloadAll(media, fullDir, parallel, cookies) {
+	for response := range shared.DownloadAll(media, fullDir, parallel, f) {
 		queue.Add(response)
 
 		if !opened {
