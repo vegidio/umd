@@ -3,6 +3,7 @@ package umd
 import (
 	"fmt"
 
+	"github.com/vegidio/umd/internal/extractors/bunkr"
 	"github.com/vegidio/umd/internal/extractors/coomer"
 	"github.com/vegidio/umd/internal/extractors/cyberdrop"
 	"github.com/vegidio/umd/internal/extractors/fapello"
@@ -55,6 +56,7 @@ func (u *Umd) WithMetadata(metadata types.Metadata) *Umd {
 func (u *Umd) FindExtractor(url string) (types.Extractor, error) {
 	var extractor types.Extractor
 	extractors := []func(string, types.Metadata, types.External) (types.Extractor, error){
+		bunkr.New,
 		coomer.New,
 		cyberdrop.New,
 		fapello.New,

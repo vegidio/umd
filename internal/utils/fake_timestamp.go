@@ -5,30 +5,42 @@ import (
 	"math/big"
 	"strings"
 	"time"
+
+	"github.com/vegidio/go-sak/crypto"
 )
 
 const base62Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 func FakeTimestamp(s string) time.Time {
-	start := time.Date(1980, time.October, 6, 17, 7, 0, 0, time.UTC)
-	end := time.Date(2035, 12, 31, 23, 59, 59, 0, time.UTC)
-
-	if !end.After(start) {
-		return time.Now()
-	}
-	n, err := base62ToBigInt(s)
+	hash, err := crypto.Sha256Hash(s)
 	if err != nil {
 		return time.Now()
 	}
 
-	// We map to seconds resolution within [start, end].
-	rangeSeconds := end.Unix() - start.Unix() + 1 // +1 to include 'end' second
-	if rangeSeconds <= 0 {
+	// Parse the 256-bit value.
+	val := new(big.Int)
+	if _, ok := val.SetString(hash, 16); !ok {
 		return time.Now()
 	}
 
-	r := new(big.Int).Mod(n, big.NewInt(rangeSeconds)).Int64()
-	return start.Add(time.Duration(r) * time.Second)
+	// Constants: [start, end] window in UTC.
+	start := time.Date(1980, 10, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2035, 10, 1, 0, 0, 0, 0, time.UTC)
+
+	// The total span in nanoseconds fits in int64 (~55 years).
+	totalDur := end.Sub(start)
+	totalNanos := totalDur.Nanoseconds()
+
+	// max = 2^256 - 1
+	maxValue := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
+
+	// Scale: floor(val * totalNanos / max).
+	numer := new(big.Int).Mul(val, big.NewInt(totalNanos))
+	scaled := new(big.Int).Quo(numer, maxValue) // integer division
+
+	// Convert to duration (safe: scaled <= totalNanos, which fits int64).
+	offset := time.Duration(scaled.Int64())
+	return start.Add(offset)
 }
 
 // region - Private functions

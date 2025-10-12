@@ -5,6 +5,8 @@ type ExtractorType int
 const (
 	// Generic represents a generic extractor type.
 	Generic ExtractorType = iota
+	// Bunkr represents the Bunkr (bunkr.cr) extractor type.
+	Bunkr
 	// Coomer represents the Coomer (coomer.st) extractor type.
 	Coomer
 	// Cyberdrop represents the Cyberdrop (cyberdrop.me) extractor type.
@@ -31,6 +33,8 @@ func (e ExtractorType) String() string {
 	switch e {
 	case Generic:
 		return "Generic"
+	case Bunkr:
+		return "Bunkr"
 	case Coomer:
 		return "Coomer"
 	case Cyberdrop:
