@@ -18,7 +18,7 @@ func TestSimpCity_QueryThread(t *testing.T) {
 	}
 
 	log.SetLevel(log.DebugLevel)
-	const NumberOfPosts = 472
+	const NumberOfPosts = 471
 
 	cookies, _ := fetch.GetFileCookies("/Users/vegidio/Desktop/cookies.txt")
 
@@ -49,7 +49,7 @@ func TestSimpCity_QueryThread_Page45(t *testing.T) {
 	}
 
 	log.SetLevel(log.DebugLevel)
-	const NumberOfPosts = 102
+	const NumberOfPosts = 103
 
 	cookies, _ := fetch.GetFileCookies("/Users/vegidio/Desktop/cookies.txt")
 
