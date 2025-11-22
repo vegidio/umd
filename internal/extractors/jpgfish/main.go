@@ -22,7 +22,7 @@ type JpgFish struct {
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
-	case utils.HasHost(url, "jpg5.su", "jpg6.su"):
+	case utils.HasHost(url, "jpg5.su", "jpg6.su", "jpg7.cr"):
 		return &JpgFish{Metadata: metadata, url: url, external: external}, nil
 	}
 
