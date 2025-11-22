@@ -9,13 +9,13 @@ import (
 	"github.com/vegidio/umd/internal/utils"
 )
 
-const BaseUrl = "https://cyberdrop.me/"
+const BaseUrl = "https://cyberdrop.cr/"
 
 var f = fetch.New(nil, 0)
 
 func getImage(id string) (*Image, error) {
 	var image *Image
-	url := fmt.Sprintf("https://api.cyberdrop.me/api/file/info/%s", id)
+	url := fmt.Sprintf("https://api.cyberdrop.cr/api/file/info/%s", id)
 	resp, err := f.GetResult(url, nil, &image)
 
 	if err != nil {

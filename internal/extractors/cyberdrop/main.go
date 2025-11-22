@@ -22,7 +22,7 @@ type Cyberdrop struct {
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
-	case utils.HasHost(url, "cyberdrop.to", "cyberdrop.me"):
+	case utils.HasHost(url, "cyberdrop.to", "cyberdrop.me", "cyberdrop.cr"):
 		return &Cyberdrop{Metadata: metadata, url: url, external: external}, nil
 	}
 

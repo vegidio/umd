@@ -9,7 +9,7 @@ It supports the following sites:
 <br/><br/>
 <a href="https://bunkr.cr" target="_blank"><img src="https://img.shields.io/badge/Bunkr-7C3AED?&style=for-the-badge&logo=picardsurgeles&logoColor=white"/></a>
 <a href="https://coomer.st" target="_blank"><img src="https://img.shields.io/badge/Coomer-1392F4?&style=for-the-badge&logo=onlyfans&logoColor=white"/></a>
-<a href="https://cyberdrop.me" target="_blank"><img src="https://img.shields.io/badge/Cyberdrop-FE41BE?&style=for-the-badge&logo=sunrise&logoColor=white"/></a>
+<a href="https://cyberdrop.cr" target="_blank"><img src="https://img.shields.io/badge/Cyberdrop-FE41BE?&style=for-the-badge&logo=sunrise&logoColor=white"/></a>
 <a href="https://fapello.com" target="_blank"><img src="https://img.shields.io/badge/Fapello-FF647C?&style=for-the-badge&logo=favro&logoColor=white"/></a>
 <a href="https://imaglr.com" target="_blank"><img src="https://img.shields.io/badge/Imaglr-0A3257?&style=for-the-badge&logo=quizlet&logoColor=white"/></a>
 <a href="https://jpg6.su" target="_blank"><img src="https://img.shields.io/badge/JpgFish-E97B1D?&style=for-the-badge&logo=fishshell&logoColor=white"/></a>

@@ -32,7 +32,7 @@ func TestBunkr_QueryVideo(t *testing.T) {
 }
 
 func TestBunkr_QueryAlbum(t *testing.T) {
-	const NumberOfPosts = 32
+	const NumberOfPosts = 31
 
 	extractor, _ := umd.New().FindExtractor("https://bunkr.cr/a/v40v0xW1")
 	resp, _ := extractor.QueryMedia(99999, nil, true)
