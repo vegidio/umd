@@ -257,7 +257,7 @@ jobs:
 
       - name: Create the changelog
         run: |
-          pnpm install -g release-it @release-it/conventional-changelog
+          pnpm install -g release-it @release-it/conventional-changelog@10.0.1
           release-it --ci
 
       - name: Create release
