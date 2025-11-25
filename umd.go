@@ -6,6 +6,7 @@ import (
 	"github.com/vegidio/umd/internal/extractors/bunkr"
 	"github.com/vegidio/umd/internal/extractors/coomer"
 	"github.com/vegidio/umd/internal/extractors/cyberdrop"
+	"github.com/vegidio/umd/internal/extractors/erome"
 	"github.com/vegidio/umd/internal/extractors/fapello"
 	"github.com/vegidio/umd/internal/extractors/imaglr"
 	"github.com/vegidio/umd/internal/extractors/jpgfish"
@@ -59,6 +60,7 @@ func (u *Umd) FindExtractor(url string) (types.Extractor, error) {
 		bunkr.New,
 		coomer.New,
 		cyberdrop.New,
+		erome.New,
 		fapello.New,
 		imaglr.New,
 		jpgfish.New,

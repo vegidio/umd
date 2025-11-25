@@ -1,18 +1,14 @@
 package utils
 
 import (
-	"fmt"
 	"math/big"
-	"strings"
 	"time"
 
 	"github.com/vegidio/go-sak/crypto"
 )
 
-const base62Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
 func FakeTimestamp(s string) time.Time {
-	hash, err := crypto.Sha256Hash(s)
+	hash, err := crypto.Sha256String(s)
 	if err != nil {
 		return time.Now()
 	}
@@ -42,24 +38,3 @@ func FakeTimestamp(s string) time.Time {
 	offset := time.Duration(scaled.Int64())
 	return start.Add(offset)
 }
-
-// region - Private functions
-
-func base62ToBigInt(s string) (*big.Int, error) {
-	n := big.NewInt(0)
-	base := big.NewInt(62)
-
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		idx := int64(strings.IndexByte(base62Alphabet, c))
-
-		if idx < 0 {
-			return nil, fmt.Errorf("invalid base62 char %q at pos %d", c, i)
-		}
-		n.Mul(n, base)
-		n.Add(n, big.NewInt(idx))
-	}
-	return n, nil
-}
-
-// endregion

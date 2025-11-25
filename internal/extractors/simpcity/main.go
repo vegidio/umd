@@ -174,7 +174,7 @@ func (s *SimpCity) fetchMedia(
 
 			media := s.dataToMedia(post.Data, source.Type())
 			if deep {
-				media = async.ProcessChannel(media, 5, func(m types.Media) types.Media {
+				media = async.ConcurrentChannel(media, 5, func(m types.Media) types.Media {
 					return s.external.ExpandMedia(m, Host, &s.responseMetadata)
 				})
 			}

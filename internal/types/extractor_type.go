@@ -9,15 +9,17 @@ const (
 	Bunkr
 	// Coomer represents the Coomer (coomer.st) extractor type.
 	Coomer
-	// Cyberdrop represents the Cyberdrop (cyberdrop.me) extractor type.
+	// Cyberdrop represents the Cyberdrop (cyberdrop.cr) extractor type.
 	Cyberdrop
+	// Erome represents the Erome (erome.com) extractor type.
+	Erome
 	// Fapello represents the Fapello (fapello.com) extractor type.
 	Fapello
 	// Imaglr represents the Imaglr (imaglr.com) extractor type.
 	Imaglr
 	// JpgFish represents the JpgFish (jpg6.su) extractor type.
 	JpgFish
-	// Kemono the Kemono (kemono.cr) extractor type.
+	// Kemono represents the Kemono (kemono.cr) extractor type.
 	Kemono
 	// Reddit represents the Reddit (reddit.com) extractor type.
 	Reddit
@@ -39,6 +41,8 @@ func (e ExtractorType) String() string {
 		return "Coomer"
 	case Cyberdrop:
 		return "Cyberdrop"
+	case Erome:
+		return "Erome"
 	case Fapello:
 		return "Fapello"
 	case Imaglr:

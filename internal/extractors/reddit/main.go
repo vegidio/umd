@@ -163,7 +163,7 @@ func (r *Reddit) fetchMedia(
 
 			media := r.dataToMedia(child.Data, source.Type(), source.Name())
 			if deep {
-				media = async.ProcessChannel(media, 5, func(m types.Media) types.Media {
+				media = async.ConcurrentChannel(media, 5, func(m types.Media) types.Media {
 					return r.external.ExpandMedia(m, Host, &r.responseMetadata)
 				})
 			}
