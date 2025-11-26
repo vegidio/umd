@@ -35,8 +35,8 @@ func getThread(id string, startPage, maxPages int, headers map[string]string) <-
 			return
 		}
 
-		name := doc.Find("h1.p-title-value").Contents().Not("a, span").Text()
-		name = strings.TrimSpace(name)
+		title := doc.Find("h1.p-title-value").Contents().Not("a, span").Text()
+		title = strings.TrimSpace(title)
 
 		pagesStr := doc.Find("li.pageNav-page > a").Last().Text()
 		pagesNum, err := strconv.Atoi(pagesStr)
@@ -71,7 +71,7 @@ func getThread(id string, startPage, maxPages int, headers map[string]string) <-
 			}
 
 			pDoc.Find("div.message-cell--main").Each(func(i int, q *goquery.Selection) {
-				post, postErr := parsePost(id, name, q)
+				post, postErr := parsePost(id, title, q)
 
 				if postErr != nil {
 					out <- types.Result[Post]{Err: postErr}
@@ -85,7 +85,7 @@ func getThread(id string, startPage, maxPages int, headers map[string]string) <-
 	return out
 }
 
-func parsePost(id, name string, query *goquery.Selection) (*Post, error) {
+func parsePost(id, title string, query *goquery.Selection) (*Post, error) {
 	attachments := make([]Attachment, 0)
 	timeS := query.Find("time.u-dt")
 	published := time.Now()
@@ -114,7 +114,7 @@ func parsePost(id, name string, query *goquery.Selection) (*Post, error) {
 	return &Post{
 		Id:          id,
 		Url:         postUrl,
-		Name:        name,
+		Title:       title,
 		Attachments: attachments,
 		Published:   published,
 	}, nil

@@ -40,7 +40,8 @@ func TestSimpCity_QueryThread(t *testing.T) {
 	assert.Equal(t, NumberOfPosts, len(resp.Media))
 	assert.Equal(t, "https://simpcity.cr/attachments/1215x1688_7ec0a1bb6b3e911e892e54556be53825-jpg.2063/", resp.Media[0].Url)
 	assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
-	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["name"])
+	assert.Equal(t, "jessica-nigri.9946", resp.Media[0].Metadata["name"])
+	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["title"])
 }
 
 func TestSimpCity_QueryThread_Page45(t *testing.T) {
@@ -69,12 +70,13 @@ func TestSimpCity_QueryThread_Page45(t *testing.T) {
 	err := resp.Error()
 
 	_, exists := lo.Find(resp.Media, func(m types.Media) bool {
-		return m.Url == "https://simp6.selti-delivery.ru/images3/1000010158bb9dba913dcf1953.jpg"
+		return m.Url == "https://simp6.selti-delivery.ru/images3/3648x5472_3c344642691c205fc5589244022a17fb79d3c8ef2c026514.jpg"
 	})
 
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfPosts, len(resp.Media))
 	assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
-	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["name"])
+	assert.Equal(t, "jessica-nigri.9946", resp.Media[0].Metadata["name"])
+	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["title"])
 	assert.True(t, exists)
 }

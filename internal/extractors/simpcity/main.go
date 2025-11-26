@@ -195,9 +195,9 @@ func (s *SimpCity) dataToMedia(post Post, sourceName string) <-chan types.Media 
 
 		for _, attachment := range post.Attachments {
 			media := types.NewMedia(attachment.ThumbUrl, types.SimpCity, map[string]interface{}{
-				"id":      post.Id,
+				"name":    post.Id,
 				"url":     post.Url,
-				"name":    post.Name,
+				"title":   post.Title,
 				"source":  strings.ToLower(sourceName),
 				"created": post.Published,
 			}, headers)

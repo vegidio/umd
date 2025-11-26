@@ -5,7 +5,7 @@ import "time"
 type Post struct {
 	Id          string
 	Url         string
-	Name        string
+	Title       string
 	Attachments []Attachment
 	Published   time.Time
 }
