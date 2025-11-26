@@ -9,7 +9,7 @@ tasks:
   # CLI build tasks
   cli:
     desc: Build the CLI version of the app
-    dir: cli
+    dir: cmd/cli
     requires:
       vars: [ os, arch ]
     vars:
@@ -26,7 +26,7 @@ tasks:
   # GUI build tasks
   gui:
     desc: Build the GUI version of the app
-    dir: gui
+    dir: cmd/gui
     requires:
       vars: [ os, arch ]
     vars:

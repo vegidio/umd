@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run CLI" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="umd" />
-    <working_directory value="$PROJECT_DIR$/cli" />
-    <parameters value="-d ~/Desktop/test -cf ~/Desktop/cookies.txt https://simpcity.cr/threads/jessica-nigri.9946/" />
+    <working_directory value="$PROJECT_DIR$/cmd/cli" />
+    <parameters value="-d ~/Downloads/UMD --cookies-file ~/Desktop/cookies.txt https://simpcity.cr/threads/sylvia-yasmina-sylviayasmina.239680/" />
     <kind value="PACKAGE" />
     <package value="cli" />
     <directory value="$PROJECT_DIR$" />

@@ -4,9 +4,8 @@ import "time"
 
 type Album struct {
 	Id      string
-	Name    string
+	Title   string
 	User    string
-	Url     string
 	Created time.Time
 	Links   []string
 }

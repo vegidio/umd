@@ -2,7 +2,7 @@ go 1.25.1
 
 use (
 	.
-	cli
-	gui
-	shared
+	cmd/cli
+	cmd/gui
+	internal/shared
 )

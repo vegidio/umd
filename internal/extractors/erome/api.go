@@ -26,7 +26,7 @@ func getAlbum(id string) (*Album, error) {
 		return nil, err
 	}
 
-	name := doc.Find("h1.album-title-page").Text()
+	title := doc.Find("h1.album-title-page").Text()
 	user := doc.Find("a#user_name").Text()
 	created := utils.FakeTimestamp(id)
 
@@ -44,9 +44,8 @@ func getAlbum(id string) (*Album, error) {
 
 	return &Album{
 		Id:      id,
-		Name:    name,
+		Title:   title,
 		User:    user,
-		Url:     url,
 		Created: created,
 		Links:   links,
 	}, nil

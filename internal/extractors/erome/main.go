@@ -110,7 +110,9 @@ func (e *Erome) QueryMedia(limit int, extensions []string, deep bool) (*types.Re
 }
 
 func (e *Erome) DownloadHeaders() map[string]string {
-	return nil
+	return map[string]string{
+		"Referer": e.url,
+	}
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -175,9 +177,9 @@ func (e *Erome) dataToMedia(album Album, sourceName string) <-chan types.Media {
 
 		for _, link := range album.Links {
 			out <- types.NewMedia(link, types.Erome, map[string]interface{}{
-				"id":      album.Id,
-				"name":    album.Name,
 				"source":  strings.ToLower(sourceName),
+				"name":    album.Id,
+				"title":   album.Title,
 				"created": album.Created,
 			}, headers)
 		}
