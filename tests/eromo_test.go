@@ -16,8 +16,8 @@ func TestErome_QueryAlbum1(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfMedia, len(resp.Media))
-	assert.Equal(t, "YI93aUC3", resp.Media[0].Metadata["id"])
-	assert.Equal(t, "likablewoman@Onlyfans", resp.Media[0].Metadata["name"])
+	assert.Equal(t, "YI93aUC3", resp.Media[0].Metadata["name"])
+	assert.Equal(t, "likablewoman@Onlyfans", resp.Media[0].Metadata["title"])
 }
 
 func TestErome_QueryAlbum2(t *testing.T) {
@@ -29,6 +29,6 @@ func TestErome_QueryAlbum2(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfMedia, len(resp.Media))
-	assert.Equal(t, "oidPGn1c", resp.Media[0].Metadata["id"])
-	assert.Equal(t, "likablewoman", resp.Media[0].Metadata["name"])
+	assert.Equal(t, "oidPGn1c", resp.Media[0].Metadata["name"])
+	assert.Equal(t, "likablewoman", resp.Media[0].Metadata["title"])
 }
