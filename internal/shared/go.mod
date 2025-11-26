@@ -1,6 +1,6 @@
 module shared
 
-go 1.25.1
+go 1.25.4
 
 require (
 	github.com/denisbrodbeck/machineid v1.0.1

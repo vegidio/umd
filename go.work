@@ -1,8 +1,9 @@
-go 1.25.1
+go 1.25.4
 
 use (
 	.
 	cmd/cli
 	cmd/gui
+	cmd/playground
 	internal/shared
 )

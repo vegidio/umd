@@ -57,7 +57,7 @@ jobs:
 
       - name: Build Linux binaries
         run: |
-          node scripts/replace.mjs shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs internal/shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
           task package oses=linux archs=amd64
 
       - name: Save artifacts
@@ -97,7 +97,7 @@ jobs:
 
       - name: Build Linux binaries
         run: |
-          node scripts/replace.mjs shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs internal/shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
           task package oses=linux archs=arm64
 
       - name: Save artifacts
@@ -132,7 +132,7 @@ jobs:
 
       - name: Build MacOS binaries
         run: |
-          node scripts/replace.mjs shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs internal/shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
           task package oses=darwin archs='amd64 arm64'
 
       - name: Save artifacts
@@ -170,7 +170,7 @@ jobs:
 
       - name: Build Windows binaries
         run: |
-          node scripts/replace.mjs shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs internal/shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
           task package oses=windows archs=amd64
 
       - name: Save artifacts
@@ -222,7 +222,7 @@ jobs:
           CC: aarch64-w64-mingw32-gcc
           CXX: aarch64-w64-mingw32-g++
         run: |
-          node scripts/replace.mjs shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs internal/shared/telemetry.go "<version>=>${{ needs.version.outputs.VERSION }}"
           task package oses=windows archs=arm64
 
       - name: Save artifacts
