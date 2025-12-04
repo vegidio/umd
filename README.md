@@ -141,7 +141,7 @@ This app collects information about the data that you're downloading to help me 
 
 ## 📝 License
 
-**UMD** is released under the MIT License. See [LICENSE](LICENSE) for details.
+**UMD** is released under the Apache 2.0 License. See [LICENSE](LICENSE) for details.
 
 ## 👨🏾‍💻 Author
 
