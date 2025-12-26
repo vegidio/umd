@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 import {
     Box,
     Button,
@@ -18,13 +18,12 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Typography,
-} from '@mui/material';
-import { enqueueSnackbar } from 'notistack';
-import { CancelDownloads, StartDownload } from '../../wailsjs/go/main/App';
-import { useAppStore } from '../stores/app';
-import { useSettingsStore } from '../stores/settings';
-import { TypeCell } from './MediaList';
+    Typography
+} from '@mui/material'
+import { enqueueSnackbar } from 'notistack'
+import { CancelDownloads, StartDownload } from '../../wailsjs/go/main/App'
+import { useAppStore } from '../stores/app'
+import { TypeCell } from './MediaList'
 
 type Props = {
     open: boolean;
@@ -40,13 +39,12 @@ export const DialogDownload = ({ open, onClose }: Props) => {
     const setProgress = useAppStore((state) => state.setProgress);
 
     const [isDownloading, setIsDownloading] = useState(true);
-    const enableTelemetry = useSettingsStore((state) => state.enableTelemetry);
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: should fire only once
     useEffect(() => {
         let mounted = true;
         (async () => {
-            await StartDownload(selectedMedia, directory, 5, enableTelemetry);
+            await StartDownload(selectedMedia, directory, 5);
             setIsDownloading(false);
             enqueueSnackbar('Download completed', { variant: 'success' });
         })();

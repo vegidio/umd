@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"shared"
 
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/vegidio/go-sak/fetch"
+	"github.com/vegidio/go-sak/o11y"
 	"github.com/vegidio/umd"
 )
 
@@ -22,19 +22,22 @@ func startQuery(
 	noTelemetry bool,
 	cookies []fetch.Cookie,
 ) error {
-	mp := shared.NewMixPanel(uuid.New().String())
+	tel := o11y.NewTelemetry(shared.OtelEndpoint, "umd", shared.Version, shared.OtelEnvironment, !noTelemetry)
+	defer tel.Close()
+
 	fields := make(map[string]any)
 	var resp *umd.Response
 	var err error
 
 	fields["interface"] = "cli"
 	fields["limit"] = limit
+	fields["url"] = url
 
 	u := umd.New()
 
 	if len(cookies) > 0 {
 		metadata := umd.Metadata{
-			umd.SimpCity: map[string]interface{}{
+			umd.SimpCity: map[string]any{
 				"cookie": fetch.CookiesToHeader(cookies),
 			},
 		}
@@ -44,6 +47,7 @@ func startQuery(
 
 	extractor, err := u.FindExtractor(url)
 	if err != nil {
+		tel.LogError("Extractor not found", fields, err)
 		return err
 	}
 
@@ -52,6 +56,7 @@ func startQuery(
 
 	source, err := extractor.SourceType()
 	if err != nil {
+		tel.LogError("Source type not found", fields, err)
 		return err
 	}
 
@@ -72,10 +77,7 @@ func startQuery(
 	}
 
 	fields["cache"] = resp != nil
-
-	if !noTelemetry {
-		mp.Track("Start Download", fields)
-	}
+	tel.LogInfo("Start download", fields)
 
 	// nil means that nothing was found in the cache
 	if resp == nil {
@@ -83,6 +85,7 @@ func startQuery(
 
 		err = charm.StartSpinner(source.Type(), source.Name(), resp)
 		if err != nil {
+			tel.LogError("Error while querying media", fields, err)
 			return err
 		}
 
@@ -91,19 +94,20 @@ func startQuery(
 
 	clear(fields)
 	fields["parallel"] = parallel
-	fields["mediaFound"] = len(resp.Media)
+	fields["media.found"] = len(resp.Media)
 
 	result := shared.DownloadAll(resp.Media, fullDir, parallel)
 	responses, err := charm.StartProgress(result, len(resp.Media))
 	if err != nil {
+		tel.LogError("Error while downloading media", fields, err)
 		return err
 	}
 
 	downloads := lo.Map(responses, func(r *fetch.Response, _ int) shared.Download { return shared.ResponseToDownload(r) })
 	successes := lo.CountBy(downloads, func(d shared.Download) bool { return d.IsSuccess })
 	failures := lo.CountBy(downloads, func(d shared.Download) bool { return !d.IsSuccess })
-	fields["numSuccesses"] = successes
-	fields["numFailures"] = failures
+	fields["downloads.success"] = successes
+	fields["downloads.failure"] = failures
 
 	isFirstDuplicate := true
 	_, remaining := shared.RemoveDuplicates(downloads, func(download shared.Download) {
@@ -116,9 +120,7 @@ func startQuery(
 		charm.PrintDeleted(fileName)
 	})
 
-	if !noTelemetry {
-		mp.Track("End Download", fields)
-	}
+	tel.LogInfo("End download", fields)
 
 	shared.CreateReport(fullDir, remaining)
 

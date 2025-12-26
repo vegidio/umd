@@ -6,19 +6,19 @@ import (
 	"shared"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/vegidio/go-sak/fetch"
 	"github.com/vegidio/go-sak/github"
+	"github.com/vegidio/go-sak/o11y"
 	"github.com/vegidio/umd"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 var name string
 var extractorName string
-var mp *shared.MixPanel
+var tel *o11y.Telemetry
 var stop func()
 
 func (a *App) QueryMedia(
@@ -34,10 +34,15 @@ func (a *App) QueryMedia(
 	var resp *umd.Response
 	var err error
 
-	mp = shared.NewMixPanel(uuid.New().String())
+	if tel != nil {
+		tel.Close()
+	}
+	tel = o11y.NewTelemetry(shared.OtelEndpoint, "umd", shared.Version, shared.OtelEndpoint, enableTelemetry)
+
 	fields := make(map[string]any)
 	fields["interface"] = "gui"
 	fields["limit"] = limit
+	fields["url"] = url
 
 	cookies, err := shared.GetCookies(cookiesType, cookiesPath)
 	if err != nil {
@@ -48,7 +53,7 @@ func (a *App) QueryMedia(
 
 	if len(cookies) > 0 {
 		metadata := umd.Metadata{
-			umd.SimpCity: map[string]interface{}{
+			umd.SimpCity: map[string]any{
 				"cookie": fetch.CookiesToHeader(cookies),
 			},
 		}
@@ -58,6 +63,7 @@ func (a *App) QueryMedia(
 
 	extractor, err := u.FindExtractor(url)
 	if err != nil {
+		tel.LogError("Extractor not found", fields, err)
 		return nil, err
 	}
 
@@ -67,6 +73,7 @@ func (a *App) QueryMedia(
 
 	source, err := extractor.SourceType()
 	if err != nil {
+		tel.LogError("Source type not found", fields, err)
 		return nil, err
 	}
 
@@ -87,10 +94,7 @@ func (a *App) QueryMedia(
 	}
 
 	fields["cache"] = resp != nil
-
-	if enableTelemetry {
-		mp.Track("Start Download", fields)
-	}
+	tel.LogInfo("Start download", fields)
 
 	// nil means that nothing was found in the cache
 	if resp == nil {
@@ -99,8 +103,8 @@ func (a *App) QueryMedia(
 		err = resp.Track(func(_, total int) {
 			a.OnMediaQueried(total)
 		})
-
 		if err != nil {
+			tel.LogError("Error while querying media", fields, err)
 			return nil, err
 		}
 
@@ -123,10 +127,10 @@ func (a *App) CancelDownloads() {
 	shared.CancelDownloads()
 }
 
-func (a *App) StartDownload(media []umd.Media, directory string, parallel int, enableTelemetry bool) []shared.Download {
+func (a *App) StartDownload(media []umd.Media, directory string, parallel int) []shared.Download {
 	fields := make(map[string]any)
 	fields["parallel"] = parallel
-	fields["mediaFound"] = len(media)
+	fields["media.found"] = len(media)
 
 	fullDir := filepath.Join(directory, extractorName, name)
 	queue := shared.NewQueue(5)
@@ -179,15 +183,13 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 	downloads := lo.Map(responses, func(r *fetch.Response, _ int) shared.Download { return shared.ResponseToDownload(r) })
 	successes := lo.CountBy(downloads, func(d shared.Download) bool { return d.IsSuccess })
 	failures := lo.CountBy(downloads, func(d shared.Download) bool { return !d.IsSuccess })
-	fields["numSuccesses"] = successes
-	fields["numFailures"] = failures
+	fields["downloads.success"] = successes
+	fields["downloads.failure"] = failures
 
 	_, remaining := shared.RemoveDuplicates(downloads, nil)
 	shared.CreateReport(fullDir, remaining)
 
-	if enableTelemetry {
-		mp.Track("End Download", fields)
-	}
+	tel.LogInfo("End download", fields)
 
 	return downloads
 }
