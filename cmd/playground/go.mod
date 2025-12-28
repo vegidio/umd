@@ -2,7 +2,7 @@ module playground
 
 go 1.25.4
 
-require github.com/vegidio/go-sak v0.0.0-20251227190924-1b6256a93bb7
+require github.com/vegidio/go-sak v0.0.0-20251229101900-69359b5ac6b8
 
 require (
 	github.com/Velocidex/json v0.0.0-20220224052537-92f3c0326e5a // indirect

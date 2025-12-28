@@ -6,7 +6,7 @@ require (
 	github.com/dromara/dongle v1.0.1
 	github.com/samber/lo v1.52.0
 	github.com/spf13/afero v1.15.0
-	github.com/vegidio/go-sak v0.0.0-20251227190924-1b6256a93bb7
+	github.com/vegidio/go-sak v0.0.0-20251229101900-69359b5ac6b8
 	github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887
 	github.com/zeebo/blake3 v0.2.4
 )

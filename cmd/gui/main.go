@@ -3,8 +3,10 @@ package main
 import (
 	"embed"
 	"io"
+	"shared"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/vegidio/go-sak/o11y"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 
 	"github.com/wailsapp/wails/v2"
@@ -19,8 +21,11 @@ func main() {
 	// Disable logging
 	log.SetOutput(io.Discard)
 
+	tel := o11y.NewTelemetry(shared.OtelEndpoint, "umd", shared.Version, shared.OtelEnvironment, true)
+	defer tel.Close()
+
 	// Create an instance of the app structure
-	app := NewApp()
+	app := NewApp(tel)
 
 	// Create an application with options
 	err := wails.Run(&options.App{
@@ -41,6 +46,7 @@ func main() {
 	})
 
 	if err != nil {
+		tel.LogError("Error running the app", nil, err)
 		log.Error("Error:", err)
 	}
 }

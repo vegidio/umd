@@ -11,14 +11,12 @@ import (
 	"github.com/spf13/afero"
 	"github.com/vegidio/go-sak/fetch"
 	"github.com/vegidio/go-sak/github"
-	"github.com/vegidio/go-sak/o11y"
 	"github.com/vegidio/umd"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 var name string
 var extractorName string
-var tel *o11y.Telemetry
 var stop func()
 
 func (a *App) QueryMedia(
@@ -33,11 +31,6 @@ func (a *App) QueryMedia(
 ) ([]umd.Media, error) {
 	var resp *umd.Response
 	var err error
-
-	if tel != nil {
-		tel.Close()
-	}
-	tel = o11y.NewTelemetry(shared.OtelEndpoint, "umd", shared.Version, shared.OtelEndpoint, enableTelemetry)
 
 	fields := make(map[string]any)
 	fields["interface"] = "gui"
@@ -63,7 +56,7 @@ func (a *App) QueryMedia(
 
 	extractor, err := u.FindExtractor(url)
 	if err != nil {
-		tel.LogError("Extractor not found", fields, err)
+		a.tel.LogError("Extractor not found", fields, err)
 		return nil, err
 	}
 
@@ -73,7 +66,7 @@ func (a *App) QueryMedia(
 
 	source, err := extractor.SourceType()
 	if err != nil {
-		tel.LogError("Source type not found", fields, err)
+		a.tel.LogError("Source type not found", fields, err)
 		return nil, err
 	}
 
@@ -94,7 +87,10 @@ func (a *App) QueryMedia(
 	}
 
 	fields["cache"] = resp != nil
-	tel.LogInfo("Start download", fields)
+
+	if enableTelemetry {
+		a.tel.LogInfo("Start download", fields)
+	}
 
 	// nil means that nothing was found in the cache
 	if resp == nil {
@@ -104,7 +100,7 @@ func (a *App) QueryMedia(
 			a.OnMediaQueried(total)
 		})
 		if err != nil {
-			tel.LogError("Error while querying media", fields, err)
+			a.tel.LogError("Error while querying media", fields, err)
 			return nil, err
 		}
 
@@ -127,7 +123,7 @@ func (a *App) CancelDownloads() {
 	shared.CancelDownloads()
 }
 
-func (a *App) StartDownload(media []umd.Media, directory string, parallel int) []shared.Download {
+func (a *App) StartDownload(media []umd.Media, directory string, parallel int, enableTelemetry bool) []shared.Download {
 	fields := make(map[string]any)
 	fields["parallel"] = parallel
 	fields["media.found"] = len(media)
@@ -189,7 +185,9 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int) [
 	_, remaining := shared.RemoveDuplicates(downloads, nil)
 	shared.CreateReport(fullDir, remaining)
 
-	tel.LogInfo("End download", fields)
+	if enableTelemetry {
+		a.tel.LogInfo("End download", fields)
+	}
 
 	return downloads
 }

@@ -56,6 +56,7 @@ func startQuery(
 
 	source, err := extractor.SourceType()
 	if err != nil {
+		fmt.Printf("\n\n")
 		tel.LogError("Source type not found", fields, err)
 		return err
 	}

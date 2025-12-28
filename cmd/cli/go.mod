@@ -9,7 +9,7 @@ require (
 	github.com/samber/lo v1.52.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v2 v2.27.7
-	github.com/vegidio/go-sak v0.0.0-20251227190924-1b6256a93bb7
+	github.com/vegidio/go-sak v0.0.0-20251229101900-69359b5ac6b8
 	github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887
 )
 
