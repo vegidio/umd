@@ -7,7 +7,7 @@ require (
 	github.com/samber/lo v1.52.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
-	github.com/vegidio/go-sak v0.0.0-20251227164806-4e3fbf448e91
+	github.com/vegidio/go-sak v0.0.0-20251227190924-1b6256a93bb7
 )
 
 require (
