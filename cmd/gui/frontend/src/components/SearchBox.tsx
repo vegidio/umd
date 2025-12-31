@@ -1,12 +1,11 @@
-import { type ChangeEvent, useCallback, useState } from 'react';
-import { Button, IconButton, InputAdornment, Stack, TextField } from '@mui/material';
-import { Cookie, Public, Search, Settings as SettingsIcon } from '@mui/icons-material';
-import { enqueueSnackbar } from 'notistack';
-import { QueryMedia } from '../../wailsjs/go/main/App';
-import { BrowserOpenURL } from '../../wailsjs/runtime';
-import { useAppStore } from '../stores/app';
-import { useSettingsStore } from '../stores/settings';
-import { DialogSettings } from './DialogSettings';
+import { type ChangeEvent, useCallback, useState } from 'react'
+import { Button, IconButton, InputAdornment, Stack, TextField } from '@mui/material'
+import { Cookie, Public, Search, Settings as SettingsIcon } from '@mui/icons-material'
+import { enqueueSnackbar } from 'notistack'
+import { QueryMedia } from '../../wailsjs/go/main/App'
+import { useAppStore } from '../stores/app'
+import { useSettingsStore } from '../stores/settings'
+import { DialogSettings } from './DialogSettings'
 
 export const SearchBox = () => {
     const directory = useAppStore((state) => state.directory);
@@ -53,7 +52,20 @@ export const SearchBox = () => {
     };
 
     const handleQueryClick = async () => {
+        let cookiesLocation = ''
+
+        try {
+            const domain = new URL(url).host;
+            cookiesLocation = cookiesType === 'automatic' ? domain : cookiesPath
+        } catch (error) {
+            enqueueSnackbar(`Invalid URL: ${url}`, { variant: 'error' });
+            return
+        }
+
         setIsQuerying(true);
+
+        console.log("cookiesType", cookiesType)
+        console.log("cookiesLocation", cookiesLocation)
 
         try {
             const media = await QueryMedia(
@@ -63,14 +75,14 @@ export const SearchBox = () => {
                 deep,
                 noCache,
                 cookiesType,
-                cookiesPath,
+                cookiesLocation,
                 enableTelemetry,
             );
 
             setMedia(media);
         } catch (e: any) {
-            if (e.endsWith('cookies')) {
-                enqueueSnackbar(e.replace('the', 'The'), {
+            if (e.includes('cookies')) {
+                enqueueSnackbar(clarifyCookiesError(e), {
                     variant: 'error',
                     action,
                 });
@@ -90,8 +102,6 @@ export const SearchBox = () => {
                     label="Enter a URL"
                     value={url}
                     size="small"
-                    autoComplete="off"
-                    autoCapitalize="off"
                     slotProps={{
                         input: {
                             startAdornment: (
@@ -99,6 +109,10 @@ export const SearchBox = () => {
                                     <Public />
                                 </InputAdornment>
                             ),
+                        },
+                        htmlInput: {
+                            autoCapitalize: 'off',
+                            autoCorrect: 'off',
                         },
                     }}
                     onChange={handleUrlChange}
@@ -137,3 +151,13 @@ export const SearchBox = () => {
         </>
     );
 };
+
+const clarifyCookiesError = (error: string) => {
+    if (error.endsWith("cookies")) {
+        return error.replace('the', 'The')
+    } else if (error.includes('no cookies found')) {
+        return "No cookies found in your browser or cookie file."
+    }
+
+    return error
+}

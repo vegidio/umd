@@ -121,7 +121,8 @@ func main() {
 				Category: "Optional:",
 				EnvVars:  []string{"UMD_COOKIES_AUTO"},
 				Action: func(context *cli.Context, b bool) error {
-					co, err := shared.GetCookies("automatic", "")
+					domain := shared.GetHost(url)
+					co, err := shared.GetCookies("automatic", domain)
 					if err != nil {
 						return err
 					}
@@ -152,11 +153,18 @@ func main() {
 				},
 			},
 		},
-		Action: func(ctx *cli.Context) error {
+		Before: func(ctx *cli.Context) error {
 			if ctx.NArg() > 0 {
 				url = ctx.Args().Get(0)
+
+				if !shared.IsValidURL(url) {
+					return fmt.Errorf("invalid URL: %s", url)
+				}
 			}
 
+			return nil
+		},
+		Action: func(ctx *cli.Context) error {
 			fullDir, err := expandPath(directory)
 			if err != nil {
 				return fmt.Errorf("directory path %s is invalid", directory)

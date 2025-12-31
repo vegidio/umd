@@ -26,7 +26,7 @@ func (a *App) QueryMedia(
 	deep bool,
 	noCache bool,
 	cookiesType string,
-	cookiesPath string,
+	cookiesLocation string,
 	enableTelemetry bool,
 ) ([]umd.Media, error) {
 	var resp *umd.Response
@@ -37,8 +37,9 @@ func (a *App) QueryMedia(
 	fields["limit"] = limit
 	fields["url"] = url
 
-	cookies, err := shared.GetCookies(cookiesType, cookiesPath)
+	cookies, err := shared.GetCookies(cookiesType, cookiesLocation)
 	if err != nil {
+		a.tel.LogError("Failed to get cookies", fields, err)
 		return nil, err
 	}
 

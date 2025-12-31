@@ -5,5 +5,5 @@ use (
 	cmd/cli
 	cmd/gui
 	cmd/playground
-	internal/shared
+	cmd/shared
 )
