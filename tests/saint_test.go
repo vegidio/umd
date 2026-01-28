@@ -15,8 +15,8 @@ func TestSaint_QueryVideo1(t *testing.T) {
 	err := resp.Error()
 
 	assert.NoError(t, err)
+	assert.Contains(t, resp.Media[0].Url, "https://dl1.turbocdn.st/data/P9kEUyTHgJd.mp4")
 	assert.Equal(t, NumberOfPosts, len(resp.Media))
-	assert.Equal(t, "https://data.saint2.cr/data/P9kEUyTHgJd.mp4", resp.Media[0].Url)
 	assert.Equal(t, "video", resp.Media[0].Metadata["source"])
 	assert.Equal(t, "P9kEUyTHgJd", resp.Media[0].Metadata["name"])
 }
@@ -29,8 +29,8 @@ func TestSaint_QueryVideo2(t *testing.T) {
 	err := resp.Error()
 
 	assert.NoError(t, err)
+	assert.Contains(t, resp.Media[0].Url, "https://dl2.turbocdn.st/data/wgqk6fjXugA.mp4")
 	assert.Equal(t, NumberOfPosts, len(resp.Media))
-	assert.Equal(t, "https://data.saint2.cr/data/wgqk6fjXugA.mp4", resp.Media[0].Url)
 	assert.Equal(t, "video", resp.Media[0].Metadata["source"])
 	assert.Equal(t, "wgqk6fjXugA", resp.Media[0].Metadata["name"])
 }

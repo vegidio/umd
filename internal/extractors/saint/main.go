@@ -22,7 +22,7 @@ type Saint struct {
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
-	case utils.HasHost(url, "saint.to", "saint2.su", "saint2.cr"):
+	case utils.HasHost(url, "saint.to", "saint2.su", "saint2.cr", "turbo.cr"):
 		return &Saint{Metadata: metadata, url: url, external: external}, nil
 	}
 
