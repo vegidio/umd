@@ -36,10 +36,10 @@ func startQuery(
 	u := umd.New()
 
 	if len(cookies) > 0 {
+		cookieHeader := fetch.CookiesToHeader(cookies)
 		metadata := umd.Metadata{
-			umd.SimpCity: map[string]any{
-				"cookie": fetch.CookiesToHeader(cookies),
-			},
+			umd.Coomer:   map[string]any{"cookie": cookieHeader},
+			umd.SimpCity: map[string]any{"cookie": cookieHeader},
 		}
 
 		u = u.WithMetadata(metadata)

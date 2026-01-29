@@ -2,6 +2,7 @@ package coomer
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/samber/lo"
 	"github.com/vegidio/go-sak/fetch"
@@ -12,10 +13,12 @@ var f = fetch.New(nil, 10)
 var baseUrl string
 var cssHeaders = map[string]string{"Accept": "text/css"}
 
-func getProfile(service string, user string) (*Profile, error) {
+func getProfile(service string, user string, headers map[string]string) (*Profile, error) {
+	maps.Copy(headers, cssHeaders)
+
 	var profile *Profile
 	url := fmt.Sprintf(baseUrl+"/api/v1/%s/user/%s/profile", service, user)
-	resp, err := f.GetResult(url, cssHeaders, &profile)
+	resp, err := f.GetResult(url, headers, &profile)
 
 	if err != nil {
 		return nil, err
@@ -26,8 +29,10 @@ func getProfile(service string, user string) (*Profile, error) {
 	return profile, nil
 }
 
-func getUser(profile Profile) <-chan types.Result[Response] {
+func getUser(profile Profile, headers map[string]string) <-chan types.Result[Response] {
 	out := make(chan types.Result[Response])
+
+	maps.Copy(headers, cssHeaders)
 
 	go func() {
 		defer close(out)
@@ -35,7 +40,7 @@ func getUser(profile Profile) <-chan types.Result[Response] {
 		for offset := 0; offset <= profile.PostCount; offset += 50 {
 			var posts []Post
 			url := fmt.Sprintf(baseUrl+"/api/v1/%s/user/%s/posts?o=%d", profile.Service, profile.Id, offset)
-			resp, err := f.GetResult(url, cssHeaders, &posts)
+			resp, err := f.GetResult(url, headers, &posts)
 
 			if err != nil {
 				out <- types.Result[Response]{Err: err}
@@ -49,7 +54,7 @@ func getUser(profile Profile) <-chan types.Result[Response] {
 			}
 
 			for _, post := range posts {
-				result := <-getPost(profile, post.Id)
+				result := <-getPost(profile, post.Id, headers)
 				if result.Err != nil {
 					out <- types.Result[Response]{Err: result.Err}
 					continue
@@ -65,15 +70,17 @@ func getUser(profile Profile) <-chan types.Result[Response] {
 	return out
 }
 
-func getPost(profile Profile, postId string) <-chan types.Result[Response] {
+func getPost(profile Profile, postId string, headers map[string]string) <-chan types.Result[Response] {
 	out := make(chan types.Result[Response])
+
+	maps.Copy(headers, cssHeaders)
 
 	go func() {
 		defer close(out)
 
 		var response Response
 		url := fmt.Sprintf(baseUrl+"/api/v1/%s/user/%s/post/%s", profile.Service, profile.Id, postId)
-		resp, err := f.GetResult(url, cssHeaders, &response)
+		resp, err := f.GetResult(url, headers, &response)
 
 		if err != nil {
 			out <- types.Result[Response]{Err: err}
@@ -91,7 +98,7 @@ func getPost(profile Profile, postId string) <-chan types.Result[Response] {
 		})
 
 		if biggestRevision.Post.RevisionId > 0 && (len(response.Images)+len(response.Videos)) < len(biggestRevision.Post.Attachments) {
-			out <- getRevision(profile, postId, biggestRevision.Post.RevisionId)
+			out <- getRevision(profile, postId, biggestRevision.Post.RevisionId, headers)
 			return
 		}
 
@@ -101,10 +108,10 @@ func getPost(profile Profile, postId string) <-chan types.Result[Response] {
 	return out
 }
 
-func getRevision(profile Profile, postId string, revisionId int) types.Result[Response] {
+func getRevision(profile Profile, postId string, revisionId int, headers map[string]string) types.Result[Response] {
 	var response ResponseRevision
 	url := fmt.Sprintf(baseUrl+"/api/v1/%s/user/%s/post/%s/revision/%d", profile.Service, profile.Id, postId, revisionId)
-	resp, err := f.GetResult(url, cssHeaders, &response)
+	resp, err := f.GetResult(url, headers, &response)
 
 	if err != nil {
 		return types.Result[Response]{Err: err}

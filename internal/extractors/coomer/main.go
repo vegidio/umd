@@ -142,7 +142,14 @@ func (c *Coomer) QueryMedia(limit int, extensions []string, deep bool) (*types.R
 }
 
 func (c *Coomer) DownloadHeaders() map[string]string {
-	return nil
+	headers := make(map[string]string)
+
+	cookie, exists := c.Metadata[types.Coomer]["cookie"].(string)
+	if exists {
+		headers["Cookie"] = cookie
+	}
+
+	return headers
 }
 
 // Compile-time assertion to ensure the extractor implements the Extractor interface
@@ -157,9 +164,15 @@ func (c *Coomer) fetchMedia(
 ) <-chan saktypes.Result[types.Media] {
 	out := make(chan saktypes.Result[types.Media])
 
+	headers := make(map[string]string)
+	cookie, exists := c.Metadata[types.Coomer]["cookie"].(string)
+	if exists {
+		headers["Cookie"] = cookie
+	}
+
 	sourceValue := reflect.ValueOf(source)
 	serviceField := sourceValue.FieldByName("Service")
-	profile, pErr := getProfile(serviceField.String(), source.Name())
+	profile, pErr := getProfile(serviceField.String(), source.Name(), headers)
 
 	if pErr != nil {
 		out <- saktypes.Result[types.Media]{Err: pErr}
@@ -172,9 +185,9 @@ func (c *Coomer) fetchMedia(
 
 		switch s := source.(type) {
 		case SourceUser:
-			responses = getUser(*profile)
+			responses = getUser(*profile, headers)
 		case SourcePost:
-			responses = getPost(*profile, s.Id)
+			responses = getPost(*profile, s.Id, headers)
 		}
 
 		for response := range responses {
