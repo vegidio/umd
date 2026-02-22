@@ -7,28 +7,40 @@ import (
 	"github.com/vegidio/umd"
 )
 
-func TestErome_QueryAlbum1(t *testing.T) {
-	const NumberOfMedia = 53
+func TestErome_QueryAlbum(t *testing.T) {
+	tests := []struct {
+		name          string
+		url           string
+		numberOfMedia int
+		albumName     string
+		albumTitle    string
+	}{
+		{
+			name:          "Album1",
+			url:           "https://www.erome.com/a/YI93aUC3",
+			numberOfMedia: 53,
+			albumName:     "YI93aUC3",
+			albumTitle:    "likablewoman@Onlyfans",
+		},
+		{
+			name:          "Album2",
+			url:           "https://www.erome.com/a/oidPGn1c",
+			numberOfMedia: 21,
+			albumName:     "oidPGn1c",
+			albumTitle:    "likablewoman",
+		},
+	}
 
-	extractor, _ := umd.New().FindExtractor("https://www.erome.com/a/YI93aUC3")
-	resp, _ := extractor.QueryMedia(99999, nil, true)
-	err := resp.Error()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			extractor, _ := umd.New().FindExtractor(tt.url)
+			resp, _ := extractor.QueryMedia(99999, nil, true)
+			err := resp.Error()
 
-	assert.NoError(t, err)
-	assert.Equal(t, NumberOfMedia, len(resp.Media))
-	assert.Equal(t, "YI93aUC3", resp.Media[0].Metadata["name"])
-	assert.Equal(t, "likablewoman@Onlyfans", resp.Media[0].Metadata["title"])
-}
-
-func TestErome_QueryAlbum2(t *testing.T) {
-	const NumberOfMedia = 21
-
-	extractor, _ := umd.New().FindExtractor("https://www.erome.com/a/oidPGn1c")
-	resp, _ := extractor.QueryMedia(99999, nil, true)
-	err := resp.Error()
-
-	assert.NoError(t, err)
-	assert.Equal(t, NumberOfMedia, len(resp.Media))
-	assert.Equal(t, "oidPGn1c", resp.Media[0].Metadata["name"])
-	assert.Equal(t, "likablewoman", resp.Media[0].Metadata["title"])
+			assert.NoError(t, err)
+			assert.Equal(t, tt.numberOfMedia, len(resp.Media))
+			assert.Equal(t, tt.albumName, resp.Media[0].Metadata["name"])
+			assert.Equal(t, tt.albumTitle, resp.Media[0].Metadata["title"])
+		})
+	}
 }

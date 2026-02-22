@@ -30,7 +30,7 @@ func getAlbum(id string) (*Album, error) {
 	user := doc.Find("a#user_name").Text()
 	created := utils.FakeTimestamp(id)
 
-	doc.Find("div.img > img").Each(func(i int, s *goquery.Selection) {
+	doc.Find("div.img[data-src]").Each(func(i int, s *goquery.Selection) {
 		if link, exists := s.Attr("data-src"); exists {
 			links = append(links, link)
 		}
