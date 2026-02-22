@@ -39,7 +39,7 @@ func (a *App) QueryMedia(
 
 	cookies, err := shared.GetCookies(cookiesType, cookiesLocation)
 	if err != nil {
-		a.tel.LogError("Failed to get cookies", fields, err)
+		a.otel.LogError("Failed to get cookies", fields, err)
 		return nil, err
 	}
 
@@ -57,7 +57,7 @@ func (a *App) QueryMedia(
 
 	extractor, err := u.FindExtractor(url)
 	if err != nil {
-		a.tel.LogError("Extractor not found", fields, err)
+		a.otel.LogError("Extractor not found", fields, err)
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func (a *App) QueryMedia(
 
 	source, err := extractor.SourceType()
 	if err != nil {
-		a.tel.LogError("Source type not found", fields, err)
+		a.otel.LogError("Source type not found", fields, err)
 		return nil, err
 	}
 
@@ -90,7 +90,7 @@ func (a *App) QueryMedia(
 	fields["cache"] = resp != nil
 
 	if enableTelemetry {
-		a.tel.LogInfo("Start download", fields)
+		a.otel.LogInfo("Start download", fields)
 	}
 
 	// nil means that nothing was found in the cache
@@ -101,7 +101,7 @@ func (a *App) QueryMedia(
 			a.OnMediaQueried(total)
 		})
 		if err != nil {
-			a.tel.LogError("Error while querying media", fields, err)
+			a.otel.LogError("Error while querying media", fields, err)
 			return nil, err
 		}
 
@@ -187,7 +187,7 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 	shared.CreateReport(fullDir, remaining)
 
 	if enableTelemetry {
-		a.tel.LogInfo("End download", fields)
+		a.otel.LogInfo("End download", fields)
 	}
 
 	return downloads

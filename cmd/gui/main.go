@@ -21,11 +21,19 @@ func main() {
 	// Disable logging
 	log.SetOutput(io.Discard)
 
-	tel := o11y.NewTelemetry(shared.OtelEndpoint, "umd", shared.Version, shared.OtelEnvironment, true)
-	defer tel.Close()
+	otel := o11y.NewTelemetry(
+		shared.OtelEndpoint,
+		"umd",
+		shared.Version,
+		map[string]string{"Authorization": shared.OtelAuth},
+		shared.OtelEnvironment,
+		true,
+	)
+
+	defer otel.Close()
 
 	// Create an instance of the app structure
-	app := NewApp(tel)
+	app := NewApp(otel)
 
 	// Create an application with options
 	err := wails.Run(&options.App{
@@ -46,7 +54,7 @@ func main() {
 	})
 
 	if err != nil {
-		tel.LogError("Error running the app", nil, err)
+		otel.LogError("Error running the app", nil, err)
 		log.Error("Error:", err)
 	}
 }

@@ -31,6 +31,7 @@ jobs:
     needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
+      OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
@@ -59,7 +60,8 @@ jobs:
       - name: Build Linux binaries
         run: |
           node scripts/replace.mjs cmd/shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
-          node scripts/replace.mjs cmd/shared/constants.go "<otel>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs cmd/shared/constants.go "EnvDevelopment=>EnvProduction"
           task package oses=linux archs=amd64
 
@@ -74,6 +76,7 @@ jobs:
     needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
+      OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
@@ -102,7 +105,8 @@ jobs:
       - name: Build Linux binaries
         run: |
           node scripts/replace.mjs cmd/shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
-          node scripts/replace.mjs cmd/shared/constants.go "<otel>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs cmd/shared/constants.go "EnvDevelopment=>EnvProduction"
           task package oses=linux archs=arm64
 
@@ -117,6 +121,7 @@ jobs:
     needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
+      OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
@@ -140,7 +145,8 @@ jobs:
       - name: Build MacOS binaries
         run: |
           node scripts/replace.mjs cmd/shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
-          node scripts/replace.mjs cmd/shared/constants.go "<otel>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs cmd/shared/constants.go "EnvDevelopment=>EnvProduction"
           task package oses=darwin archs='amd64 arm64'
 
@@ -155,6 +161,7 @@ jobs:
     needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
+      OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
@@ -181,7 +188,8 @@ jobs:
       - name: Build Windows binaries
         run: |
           node scripts/replace.mjs cmd/shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
-          node scripts/replace.mjs cmd/shared/constants.go "<otel>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs cmd/shared/constants.go "EnvDevelopment=>EnvProduction"
           task package oses=windows archs=amd64
 
@@ -196,6 +204,7 @@ jobs:
     needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
+      OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
       VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
     steps:
       - name: Code checkout
@@ -236,7 +245,8 @@ jobs:
           CXX: aarch64-w64-mingw32-g++
         run: |
           node scripts/replace.mjs cmd/shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
-          node scripts/replace.mjs cmd/shared/constants.go "<otel>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
+          node scripts/replace.mjs cmd/shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs cmd/shared/constants.go "EnvDevelopment=>EnvProduction"
           task package oses=windows archs=arm64
 

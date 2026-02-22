@@ -22,8 +22,16 @@ func startQuery(
 	noTelemetry bool,
 	cookies []fetch.Cookie,
 ) error {
-	tel := o11y.NewTelemetry(shared.OtelEndpoint, "umd", shared.Version, shared.OtelEnvironment, !noTelemetry)
-	defer tel.Close()
+	otel := o11y.NewTelemetry(
+		shared.OtelEndpoint,
+		"umd",
+		shared.Version,
+		map[string]string{"Authorization": shared.OtelAuth},
+		shared.OtelEnvironment,
+		!noTelemetry,
+	)
+
+	defer otel.Close()
 
 	fields := make(map[string]any)
 	var resp *umd.Response
@@ -47,7 +55,7 @@ func startQuery(
 
 	extractor, err := u.FindExtractor(url)
 	if err != nil {
-		tel.LogError("Extractor not found", fields, err)
+		otel.LogError("Extractor not found", fields, err)
 		return err
 	}
 
@@ -57,7 +65,7 @@ func startQuery(
 	source, err := extractor.SourceType()
 	if err != nil {
 		fmt.Printf("\n\n")
-		tel.LogError("Source type not found", fields, err)
+		otel.LogError("Source type not found", fields, err)
 		return err
 	}
 
@@ -78,7 +86,7 @@ func startQuery(
 	}
 
 	fields["cache"] = resp != nil
-	tel.LogInfo("Start download", fields)
+	otel.LogInfo("Start download", fields)
 
 	// nil means that nothing was found in the cache
 	if resp == nil {
@@ -86,7 +94,7 @@ func startQuery(
 
 		err = charm.StartSpinner(source.Type(), source.Name(), resp)
 		if err != nil {
-			tel.LogError("Error while querying media", fields, err)
+			otel.LogError("Error while querying media", fields, err)
 			return err
 		}
 
@@ -100,7 +108,7 @@ func startQuery(
 	result := shared.DownloadAll(resp.Media, fullDir, parallel)
 	responses, err := charm.StartProgress(result, len(resp.Media))
 	if err != nil {
-		tel.LogError("Error while downloading media", fields, err)
+		otel.LogError("Error while downloading media", fields, err)
 		return err
 	}
 
@@ -121,7 +129,7 @@ func startQuery(
 		charm.PrintDeleted(fileName)
 	})
 
-	tel.LogInfo("End download", fields)
+	otel.LogInfo("End download", fields)
 
 	shared.CreateReport(fullDir, remaining)
 

@@ -8,13 +8,13 @@ import (
 
 // App struct
 type App struct {
-	ctx context.Context
-	tel *o11y.Telemetry
+	ctx  context.Context
+	otel *o11y.Telemetry
 }
 
 // NewApp creates a new App application struct
-func NewApp(tel *o11y.Telemetry) *App {
-	return &App{tel: tel}
+func NewApp(otel *o11y.Telemetry) *App {
+	return &App{otel: otel}
 }
 
 // startup is called when the app starts. The context is saved

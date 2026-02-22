@@ -6,7 +6,7 @@ require (
 	github.com/samber/lo v1.52.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.15.0
-	github.com/vegidio/go-sak v0.0.0-20251231095403-269ef6b33bb6
+	github.com/vegidio/go-sak v0.0.0-20260222095309-3fc413b07da0
 	github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887
 	github.com/wailsapp/wails/v2 v2.10.2
 )
