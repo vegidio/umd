@@ -44,7 +44,7 @@ func (s *SimpCity) Type() types.ExtractorType {
 }
 
 func (s *SimpCity) SourceType() (types.SourceType, error) {
-	regexThread := regexp.MustCompile(`/threads/([^/]+)/?$`)
+	regexThread := regexp.MustCompile(`/threads/([^/]+)/?.*$`)
 
 	var source types.SourceType
 

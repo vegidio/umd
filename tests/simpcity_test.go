@@ -12,71 +12,66 @@ import (
 	"github.com/vegidio/umd/internal/types"
 )
 
-func TestSimpCity_QueryThread(t *testing.T) {
+func TestSimpCity(t *testing.T) {
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
 		t.Skip("This test doesn't work when executed from GitHub Actions")
 	}
 
+	cookies := fetch.GetBrowserCookies("simpcity.cr")
 	log.SetLevel(log.DebugLevel)
-	const NumberOfPosts = 471
 
-	cookies, _ := fetch.GetFileCookies("/Users/vegidio/Desktop/cookies.txt")
+	t.Run("QueryThread", func(t *testing.T) {
+		const NumberOfPosts = 471
 
-	metadata := umd.Metadata{
-		types.SimpCity: map[string]interface{}{
-			"maxPages": 1,
-			"cookie":   fetch.CookiesToHeader(cookies),
-		},
-	}
+		metadata := umd.Metadata{
+			types.SimpCity: map[string]interface{}{
+				"maxPages": 1,
+				"cookie":   fetch.CookiesToHeader(cookies),
+			},
+		}
 
-	extractor, _ := umd.New().
-		WithMetadata(metadata).
-		FindExtractor("https://simpcity.cr/threads/jessica-nigri.9946")
+		extractor, _ := umd.New().
+			WithMetadata(metadata).
+			FindExtractor("https://simpcity.cr/threads/jessica-nigri.9946")
 
-	resp, _ := extractor.QueryMedia(99999, nil, true)
-	err := resp.Error()
+		resp, _ := extractor.QueryMedia(99999, nil, true)
+		err := resp.Error()
 
-	assert.NoError(t, err)
-	assert.Equal(t, NumberOfPosts, len(resp.Media))
-	assert.Equal(t, "https://simpcity.cr/attachments/1215x1688_7ec0a1bb6b3e911e892e54556be53825-jpg.2063/", resp.Media[0].Url)
-	assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
-	assert.Equal(t, "jessica-nigri.9946", resp.Media[0].Metadata["name"])
-	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["title"])
-}
-
-func TestSimpCity_QueryThread_Page45(t *testing.T) {
-	if os.Getenv("GITHUB_ACTIONS") == "true" {
-		t.Skip("This test doesn't work when executed from GitHub Actions")
-	}
-
-	log.SetLevel(log.DebugLevel)
-	const NumberOfPosts = 103
-
-	cookies, _ := fetch.GetFileCookies("/Users/vegidio/Desktop/cookies.txt")
-
-	metadata := umd.Metadata{
-		types.SimpCity: map[string]interface{}{
-			"startPage": 45,
-			"maxPages":  1,
-			"cookie":    fetch.CookiesToHeader(cookies),
-		},
-	}
-
-	extractor, _ := umd.New().
-		WithMetadata(metadata).
-		FindExtractor("https://simpcity.cr/threads/jessica-nigri.9946")
-
-	resp, _ := extractor.QueryMedia(99999, nil, true)
-	err := resp.Error()
-
-	_, exists := lo.Find(resp.Media, func(m types.Media) bool {
-		return m.Url == "https://simp6.selti-delivery.ru/images3/3648x5472_3c344642691c205fc5589244022a17fb79d3c8ef2c026514.jpg"
+		assert.NoError(t, err)
+		assert.Equal(t, NumberOfPosts, len(resp.Media))
+		assert.Equal(t, "https://simpcity.cr/attachments/1215x1688_7ec0a1bb6b3e911e892e54556be53825-jpg.2063/", resp.Media[0].Url)
+		assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
+		assert.Equal(t, "jessica-nigri.9946", resp.Media[0].Metadata["name"])
+		assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["title"])
 	})
 
-	assert.NoError(t, err)
-	assert.Equal(t, NumberOfPosts, len(resp.Media))
-	assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
-	assert.Equal(t, "jessica-nigri.9946", resp.Media[0].Metadata["name"])
-	assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["title"])
-	assert.True(t, exists)
+	t.Run("QueryThread_Page45", func(t *testing.T) {
+		const NumberOfPosts = 103
+
+		metadata := umd.Metadata{
+			types.SimpCity: map[string]interface{}{
+				"startPage": 45,
+				"maxPages":  1,
+				"cookie":    fetch.CookiesToHeader(cookies),
+			},
+		}
+
+		extractor, _ := umd.New().
+			WithMetadata(metadata).
+			FindExtractor("https://simpcity.cr/threads/jessica-nigri.9946")
+
+		resp, _ := extractor.QueryMedia(99999, nil, true)
+		err := resp.Error()
+
+		_, exists := lo.Find(resp.Media, func(m types.Media) bool {
+			return m.Url == "https://simp6.selti-delivery.ru/images3/3648x5472_3c344642691c205fc5589244022a17fb79d3c8ef2c026514.jpg"
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, NumberOfPosts, len(resp.Media))
+		assert.Equal(t, "thread", resp.Media[0].Metadata["source"])
+		assert.Equal(t, "jessica-nigri.9946", resp.Media[0].Metadata["name"])
+		assert.Equal(t, "Jessica Nigri", resp.Media[0].Metadata["title"])
+		assert.True(t, exists)
+	})
 }
