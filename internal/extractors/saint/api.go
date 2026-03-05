@@ -9,7 +9,7 @@ import (
 
 const BaseUrl = "https://turbo.cr/"
 
-var f = fetch.New(nil, 0)
+var f = fetch.New(nil, 0, false)
 
 func getVideo(id string) (*Video, error) {
 	var response *Response

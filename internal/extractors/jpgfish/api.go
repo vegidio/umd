@@ -13,7 +13,7 @@ import (
 
 const BaseUrl = "https://jpg6.su/"
 
-var f = fetch.New(nil, 0)
+var f = fetch.New(nil, 0, false)
 
 func getImage(id string) (*Image, error) {
 	url := fmt.Sprintf("%simg/%s", BaseUrl, id)

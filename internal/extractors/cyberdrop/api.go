@@ -11,7 +11,7 @@ import (
 
 const BaseUrl = "https://cyberdrop.cr/"
 
-var f = fetch.New(nil, 0)
+var f = fetch.New(nil, 0, false)
 
 func getImage(id string) (*Image, error) {
 	var image *Image

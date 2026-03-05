@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/vegidio/go-sak/async"
 	saktypes "github.com/vegidio/go-sak/types"
 	"github.com/vegidio/umd/internal/types"
@@ -135,6 +136,38 @@ var _ types.Extractor = (*Reddit)(nil)
 
 // region - Private methods
 
+func (r *Reddit) getNewOrSavedToken() (string, error) {
+	token, exists := r.Metadata[types.Reddit]["token"].(string)
+
+	if !exists {
+		log.Debug("Issuing new Reddit token")
+
+		auth, err := getToken()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Error("Failed to issue Reddit token")
+
+			return "", err
+		}
+
+		token = auth.Token
+
+		if r.responseMetadata[types.Reddit] == nil {
+			r.responseMetadata[types.Reddit] = make(map[string]interface{})
+		}
+
+		// Save the token to be reused in the future
+		r.responseMetadata[types.Reddit]["token"] = token
+	} else {
+		log.WithFields(log.Fields{
+			"token": token,
+		}).Debug("Reusing Reddit token")
+	}
+
+	return token, nil
+}
+
 func (r *Reddit) fetchMedia(
 	source types.SourceType,
 	extensions []string,
@@ -146,13 +179,19 @@ func (r *Reddit) fetchMedia(
 		defer close(out)
 		var children <-chan saktypes.Result[ChildData]
 
+		token, err := r.getNewOrSavedToken()
+		if err != nil {
+			out <- saktypes.Result[types.Media]{Err: err}
+			return
+		}
+
 		switch s := source.(type) {
 		case SourceSubmission:
-			children = getSubmission(s.Id)
+			children = getSubmission(s.Id, token)
 		case SourceUser:
-			children = getUserSubmissions(s.name)
+			children = getUserSubmissions(s.name, token)
 		case SourceSubreddit:
-			children = getSubredditSubmissions(s.name)
+			children = getSubredditSubmissions(s.name, token)
 		}
 
 		for child := range children {

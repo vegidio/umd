@@ -13,7 +13,7 @@ import (
 
 const BaseUrl = "https://fapello.com/"
 
-var f = fetch.New(nil, 0)
+var f = fetch.New(nil, 0, false)
 
 func getLinks(name string, limit int) ([]string, error) {
 	links := make([]string, 0)

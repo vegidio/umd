@@ -9,7 +9,7 @@ import (
 	"github.com/vegidio/go-sak/types"
 )
 
-var f = fetch.New(nil, 10)
+var f = fetch.New(nil, 10, false)
 var baseUrl string
 var cssHeaders = map[string]string{"Accept": "text/css"}
 

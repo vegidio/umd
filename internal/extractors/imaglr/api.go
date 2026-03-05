@@ -12,7 +12,7 @@ import (
 
 const BaseUrl = "https://imaglr.com/"
 
-var f = fetch.New(nil, 0)
+var f = fetch.New(nil, 0, false)
 
 func getPost(id string) (*Post, error) {
 	url := BaseUrl + fmt.Sprintf("post/%s", id)

@@ -17,7 +17,7 @@ func DownloadAll(
 	directory string,
 	parallel int,
 ) <-chan *fetch.Response {
-	f := fetch.New(nil, 10)
+	f := fetch.New(nil, 10, false)
 
 	requests := lo.Map(media, func(m umd.Media, _ int) *fetch.Request {
 		filePath := CreateFilePath(directory, m)

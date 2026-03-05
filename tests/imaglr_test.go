@@ -20,7 +20,7 @@ func TestImaglr_DownloadVideo(t *testing.T) {
 	<-resp.Done
 
 	media := resp.Media[0]
-	f := fetch.New(nil, 0)
+	f := fetch.New(nil, 0, false)
 	request, _ := f.NewRequest(media.Url, filePath, nil)
 	downloadResponse := f.DownloadFile(request)
 

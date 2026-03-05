@@ -2,6 +2,10 @@ package reddit
 
 import "github.com/vegidio/go-sak/time"
 
+type Auth struct {
+	Token string `json:"access_token"`
+}
+
 type Submission struct {
 	Data SubmissionData `json:"data"`
 }

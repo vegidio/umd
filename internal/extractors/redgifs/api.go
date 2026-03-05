@@ -8,7 +8,7 @@ import (
 
 const BaseUrl = "https://api.redgifs.com/"
 
-var f = fetch.New(nil, 0)
+var f = fetch.New(nil, 0, false)
 
 func getToken() (*Auth, error) {
 	var auth *Auth

@@ -1,16 +1,71 @@
 package reddit
 
 import (
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/vegidio/go-sak/fetch"
 	"github.com/vegidio/go-sak/types"
 )
 
-const BaseUrl = "https://www.reddit.com/"
+const (
+	BaseUrl  = "https://www.reddit.com/"
+	OAuthUrl = "https://oauth.reddit.com/"
+)
 
-var f = fetch.New(nil, 10)
+var f = fetch.New(map[string]string{"User-Agent": "umd"}, 10, true)
+
+var httpClient = &http.Client{
+	Transport: &http.Transport{
+		TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
+	},
+}
+
+func getToken() (*Auth, error) {
+	var auth *Auth
+	endpoint := BaseUrl + "api/v1/access_token"
+
+	body := url.Values{
+		"grant_type": {"https://oauth.reddit.com/grants/installed_client"},
+		"device_id":  {"DO_NOT_TRACK_THIS_DEVICE"},
+	}
+
+	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(body.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	encodedClientId := "Nk45dU4wa3JTREUtaWc="
+	decodedClientId, err := base64.StdEncoding.DecodeString(encodedClientId)
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(string(decodedClientId), "")
+	req.Header.Set("User-Agent", "umd")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("error fetching authorization token: %s", resp.Status)
+	}
+
+	if err = json.NewDecoder(resp.Body).Decode(&auth); err != nil {
+		return nil, err
+	}
+
+	return auth, nil
+}
 
 // getSubmission fetches and processes submission data for a given Reddit post ID.
 //
@@ -21,15 +76,18 @@ var f = fetch.New(nil, 10)
 //
 // # Returns:
 //   - <-chan model.Result[ChildData] - A receive-only channel that streams Reddit post data or errors
-func getSubmission(id string) <-chan types.Result[ChildData] {
+func getSubmission(id string, token string) <-chan types.Result[ChildData] {
 	out := make(chan types.Result[ChildData])
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %s", token),
+	}
 
 	go func() {
 		defer close(out)
 
 		submissions := make([]Submission, 0)
-		url := fmt.Sprintf(BaseUrl+"comments/%s.json?raw_json=1", id)
-		resp, err := f.GetResult(url, nil, &submissions)
+		url := fmt.Sprintf(OAuthUrl+"comments/%s.json?raw_json=1", id)
+		resp, err := f.GetResult(url, headers, &submissions)
 
 		if err != nil {
 			out <- types.Result[ChildData]{Err: err}
@@ -67,9 +125,9 @@ func getSubmission(id string) <-chan types.Result[ChildData] {
 //
 // # Returns:
 //   - <-chan model.Result[ChildData] - A receive-only channel that streams submission data or errors
-func getUserSubmissions(user string) <-chan types.Result[ChildData] {
-	urlFmt := BaseUrl + "user/%s/submitted.json?sort=new&raw_json=1&after=%s&limit=%d"
-	return streamSubmissions(urlFmt, user)
+func getUserSubmissions(user string, token string) <-chan types.Result[ChildData] {
+	urlFmt := OAuthUrl + "user/%s/submitted.json?sort=new&raw_json=1&after=%s&limit=%d"
+	return streamSubmissions(urlFmt, user, token)
 }
 
 // getSubredditSubmissions retrieves a stream of subreddit submissions as a channel of types.Result[ChildData]. The
@@ -82,13 +140,16 @@ func getUserSubmissions(user string) <-chan types.Result[ChildData] {
 //
 // # Returns:
 //   - <-chan types.Result[ChildData] - A receive-only channel that streams submission data or errors.
-func getSubredditSubmissions(subreddit string) <-chan types.Result[ChildData] {
-	urlFmt := BaseUrl + "r/%s/hot.json?raw_json=1&after=%s&limit=%d"
-	return streamSubmissions(urlFmt, subreddit)
+func getSubredditSubmissions(subreddit string, token string) <-chan types.Result[ChildData] {
+	urlFmt := OAuthUrl + "r/%s/hot.json?raw_json=1&after=%s&limit=%d"
+	return streamSubmissions(urlFmt, subreddit, token)
 }
 
-func streamSubmissions(urlFmt string, what string) <-chan types.Result[ChildData] {
+func streamSubmissions(urlFmt string, what string, token string) <-chan types.Result[ChildData] {
 	out := make(chan types.Result[ChildData])
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %s", token),
+	}
 
 	go func() {
 		defer close(out)
@@ -97,7 +158,7 @@ func streamSubmissions(urlFmt string, what string) <-chan types.Result[ChildData
 		for {
 			var submission *Submission
 			url := fmt.Sprintf(urlFmt, what, after, 100)
-			resp, err := f.GetResult(url, nil, &submission)
+			resp, err := f.GetResult(url, headers, &submission)
 
 			if err != nil {
 				out <- types.Result[ChildData]{Err: err}

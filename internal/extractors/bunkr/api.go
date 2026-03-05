@@ -14,7 +14,7 @@ import (
 
 const BaseUrl = "https://bunkr.cr/"
 
-var f = fetch.New(nil, 0)
+var f = fetch.New(nil, 0, false)
 
 func getImage(slug string) (*Image, error) {
 	var response *Response

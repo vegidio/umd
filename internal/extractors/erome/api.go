@@ -10,7 +10,7 @@ import (
 
 const BaseUrl = "https://www.erome.com/a/"
 
-var f = fetch.New(nil, 0)
+var f = fetch.New(nil, 0, false)
 
 func getAlbum(id string) (*Album, error) {
 	links := make([]string, 0)

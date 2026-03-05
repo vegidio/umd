@@ -20,7 +20,7 @@ func getThread(id string, startPage, maxPages int, headers map[string]string) <-
 	go func() {
 		defer close(out)
 
-		f := fetch.New(headers, 0)
+		f := fetch.New(headers, 0, false)
 		url := fmt.Sprintf("%s/threads/%s", BaseUrl, id)
 		html, err := f.GetText(url)
 		if err != nil {
