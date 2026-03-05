@@ -8,11 +8,11 @@ import (
 	"github.com/vegidio/umd/internal/utils"
 )
 
-type External struct{}
+type External struct {
+	mu sync.Mutex
+}
 
-func (External) ExpandMedia(media Media, ignoreHost string, metadata *Metadata) Media {
-	var mu sync.Mutex
-
+func (e *External) ExpandMedia(media Media, ignoreHost string, metadata *Metadata) Media {
 	if media.Type == types.Unknown && !utils.HasHost(media.Url, ignoreHost) {
 		extractor, err := New().
 			WithMetadata(*metadata).
@@ -31,11 +31,11 @@ func (External) ExpandMedia(media Media, ignoreHost string, metadata *Metadata) 
 			return media
 		}
 
-		mu.Lock()
+		e.mu.Lock()
 		if _, exists := (*metadata)[resp.Extractor]; !exists {
 			(*metadata)[resp.Extractor] = resp.Metadata[resp.Extractor]
 		}
-		mu.Unlock()
+		e.mu.Unlock()
 
 		if len(resp.Media) > 0 {
 			resp.Media[0] = utils.MergeMetadata(media, resp.Media[0])

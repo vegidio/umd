@@ -71,7 +71,7 @@ func (u *Umd) FindExtractor(url string) (types.Extractor, error) {
 	}
 
 	for _, newExtractor := range extractors {
-		if ext, err := newExtractor(url, u.metadata, External{}); ext != nil {
+		if ext, err := newExtractor(url, u.metadata, &External{}); ext != nil {
 			if err != nil {
 				return nil, err
 			}
