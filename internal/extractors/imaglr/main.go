@@ -1,7 +1,6 @@
 package imaglr
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -12,102 +11,47 @@ import (
 )
 
 type Imaglr struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "imaglr.com"):
-		return &Imaglr{Metadata: metadata, url: url, external: external}, nil
+		i := &Imaglr{}
+		i.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.Imaglr,
+		}
+		i.FetchMediaFn = i.fetchMedia
+		i.SourceTypeFn = i.SourceType
+		return i, nil
 	}
 
 	return nil, nil
 }
 
-func (i *Imaglr) Type() types.ExtractorType {
-	return types.Imaglr
-}
+var regexPost = regexp.MustCompile(`/post/([^/\n?]+)`)
 
 func (i *Imaglr) SourceType() (types.SourceType, error) {
-	regexPost := regexp.MustCompile(`/post/([^/\n?]+)`)
 
 	var source types.SourceType
 	var id string
 
 	switch {
-	case regexPost.MatchString(i.url):
-		matches := regexPost.FindStringSubmatch(i.url)
+	case regexPost.MatchString(i.Url):
+		matches := regexPost.FindStringSubmatch(i.Url)
 		id = matches[1]
 		source = SourcePost{name: id}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", i.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", i.Url)
 	}
 
-	i.source = source
+	i.Source = source
 	return source, nil
-}
-
-func (i *Imaglr) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if i.responseMetadata == nil {
-		i.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       i.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.Imaglr,
-		Metadata:  i.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if i.source == nil {
-			i.source, err = i.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := i.fetchMedia(i.source, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (i *Imaglr) DownloadHeaders() map[string]string {
@@ -121,6 +65,7 @@ var _ types.Extractor = (*Imaglr)(nil)
 
 func (i *Imaglr) fetchMedia(
 	source types.SourceType,
+	_ int,
 	extensions []string,
 	_ bool,
 ) <-chan saktypes.Result[types.Media] {
@@ -167,12 +112,16 @@ func (i *Imaglr) dataToMedia(posts []Post, sourceName string) <-chan types.Media
 		defer close(out)
 
 		for _, post := range posts {
-			out <- types.NewMedia(post.Media, types.Imaglr, map[string]interface{}{
+			media, err := types.NewMedia(post.Media, types.Imaglr, map[string]interface{}{
 				"id":      post.Id,
 				"name":    post.Author,
 				"source":  strings.ToLower(sourceName),
 				"created": post.Timestamp,
 			}, headers)
+			if err != nil {
+				continue
+			}
+			out <- media
 		}
 	}()
 

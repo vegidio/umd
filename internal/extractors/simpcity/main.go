@@ -1,7 +1,6 @@
 package simpcity
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -15,107 +14,51 @@ import (
 const Host = "simpcity.cr"
 
 type SimpCity struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "simpcity.cr"):
-		ext := &SimpCity{Metadata: metadata, url: url, external: external}
+		s := &SimpCity{}
+		s.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.SimpCity,
+		}
+		s.FetchMediaFn = s.fetchMedia
+		s.SourceTypeFn = s.SourceType
 
 		cookie, exists := metadata[types.SimpCity]["cookie"].(string)
 		if !exists || len(cookie) == 0 {
-			return ext, fmt.Errorf("the extractor SimpCity requires cookies")
+			return s, fmt.Errorf("the extractor SimpCity requires cookies")
 		}
 
-		return ext, nil
+		return s, nil
 	}
 
 	return nil, nil
 }
 
-func (s *SimpCity) Type() types.ExtractorType {
-	return types.SimpCity
-}
+var regexThread = regexp.MustCompile(`/threads/([^/]+)/?.*$`)
 
 func (s *SimpCity) SourceType() (types.SourceType, error) {
-	regexThread := regexp.MustCompile(`/threads/([^/]+)/?.*$`)
 
 	var source types.SourceType
 
 	switch {
-	case regexThread.MatchString(s.url):
-		matches := regexThread.FindStringSubmatch(s.url)
+	case regexThread.MatchString(s.Url):
+		matches := regexThread.FindStringSubmatch(s.Url)
 		source = SourceThread{id: matches[1]}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", s.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", s.Url)
 	}
 
-	s.source = source
+	s.Source = source
 	return source, nil
-}
-
-func (s *SimpCity) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if s.responseMetadata == nil {
-		s.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       s.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.SimpCity,
-		Metadata:  s.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if s.source == nil {
-			s.source, err = s.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := s.fetchMedia(s.source, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (s *SimpCity) DownloadHeaders() map[string]string {
@@ -136,6 +79,7 @@ var _ types.Extractor = (*SimpCity)(nil)
 
 func (s *SimpCity) fetchMedia(
 	source types.SourceType,
+	_ int,
 	extensions []string,
 	deep bool,
 ) <-chan saktypes.Result[types.Media] {
@@ -175,7 +119,7 @@ func (s *SimpCity) fetchMedia(
 			media := s.dataToMedia(post.Data, source.Type())
 			if deep {
 				media = async.ConcurrentChannel(media, 5, func(m types.Media) types.Media {
-					return s.external.ExpandMedia(m, Host, &s.responseMetadata)
+					return s.External.ExpandMedia(m, Host, &s.ResponseMetadata)
 				})
 			}
 
@@ -194,13 +138,16 @@ func (s *SimpCity) dataToMedia(post Post, sourceName string) <-chan types.Media 
 		defer close(out)
 
 		for _, attachment := range post.Attachments {
-			media := types.NewMedia(attachment.ThumbUrl, types.SimpCity, map[string]interface{}{
+			media, err := types.NewMedia(attachment.ThumbUrl, types.SimpCity, map[string]interface{}{
 				"name":    post.Id,
 				"url":     post.Url,
 				"title":   post.Title,
 				"source":  strings.ToLower(sourceName),
 				"created": post.Published,
 			}, headers)
+			if err != nil {
+				continue
+			}
 
 			media.Url = attachment.MediaUrl
 			out <- media

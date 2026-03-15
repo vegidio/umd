@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/vegidio/go-sak/fetch"
 )
 
 func main() {
 	co := fetch.GetBrowserCookies("simpcity.cr")
-	println("%s", co)
+	fmt.Printf("%s\n", co)
 }

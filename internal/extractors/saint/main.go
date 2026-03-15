@@ -1,7 +1,6 @@
 package saint
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -12,100 +11,44 @@ import (
 )
 
 type Saint struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "saint.to", "saint2.su", "saint2.cr", "turbo.cr"):
-		return &Saint{Metadata: metadata, url: url, external: external}, nil
+		s := &Saint{}
+		s.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.Saint,
+		}
+		s.FetchMediaFn = s.fetchMedia
+		s.SourceTypeFn = s.SourceType
+		return s, nil
 	}
 
 	return nil, nil
 }
 
-func (s *Saint) Type() types.ExtractorType {
-	return types.Saint
-}
+var regexVideo = regexp.MustCompile(`/embed/([^/]+)/?$`)
 
 func (s *Saint) SourceType() (types.SourceType, error) {
-	regexVideo := regexp.MustCompile(`/embed/([^/]+)/?$`)
-
 	var source types.SourceType
 
 	switch {
-	case regexVideo.MatchString(s.url):
-		matches := regexVideo.FindStringSubmatch(s.url)
+	case regexVideo.MatchString(s.Url):
+		matches := regexVideo.FindStringSubmatch(s.Url)
 		source = SourceVideo{id: matches[1]}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", s.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", s.Url)
 	}
 
-	s.source = source
+	s.Source = source
 	return source, nil
-}
-
-func (s *Saint) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if s.responseMetadata == nil {
-		s.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       s.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.Saint,
-		Metadata:  s.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if s.source == nil {
-			s.source, err = s.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := s.fetchMedia(s.source, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (s *Saint) DownloadHeaders() map[string]string {
@@ -119,6 +62,7 @@ var _ types.Extractor = (*Saint)(nil)
 
 func (s *Saint) fetchMedia(
 	source types.SourceType,
+	_ int,
 	extensions []string,
 	_ bool,
 ) <-chan saktypes.Result[types.Media] {
@@ -171,12 +115,16 @@ func (s *Saint) dataToMedia(video Video, sourceName string) <-chan types.Media {
 	go func() {
 		defer close(out)
 
-		out <- types.NewMedia(video.Url, types.Saint, map[string]interface{}{
+		media, err := types.NewMedia(video.Url, types.Saint, map[string]interface{}{
 			"id":      video.Id,
 			"name":    video.Id,
 			"source":  strings.ToLower(sourceName),
 			"created": video.Published,
 		}, headers)
+		if err != nil {
+			return
+		}
+		out <- media
 	}()
 
 	return out

@@ -1,7 +1,6 @@
 package jpgfish
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -12,108 +11,55 @@ import (
 )
 
 type JpgFish struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "jpg5.su", "jpg6.su", "jpg7.cr"):
-		return &JpgFish{Metadata: metadata, url: url, external: external}, nil
+		j := &JpgFish{}
+		j.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.JpgFish,
+		}
+		j.FetchMediaFn = j.fetchMedia
+		j.SourceTypeFn = j.SourceType
+		return j, nil
 	}
 
 	return nil, nil
 }
 
-func (j *JpgFish) Type() types.ExtractorType {
-	return types.JpgFish
-}
+var (
+	regexImage = regexp.MustCompile(`/img/([^/]+)/?$`)
+	regexAlbum = regexp.MustCompile(`/a/([^/]+)/?$`)
+	regexUser  = regexp.MustCompile(`/([^/]+)/?$`)
+)
 
 func (j *JpgFish) SourceType() (types.SourceType, error) {
-	regexImage := regexp.MustCompile(`/img/([^/]+)/?$`)
-	regexAlbum := regexp.MustCompile(`/a/([^/]+)/?$`)
-	regexUser := regexp.MustCompile(`/([^/]+)/?$`)
 
 	var source types.SourceType
 
 	switch {
-	case regexImage.MatchString(j.url):
-		matches := regexImage.FindStringSubmatch(j.url)
+	case regexImage.MatchString(j.Url):
+		matches := regexImage.FindStringSubmatch(j.Url)
 		source = SourceImage{id: matches[1]}
-	case regexAlbum.MatchString(j.url):
-		matches := regexAlbum.FindStringSubmatch(j.url)
+	case regexAlbum.MatchString(j.Url):
+		matches := regexAlbum.FindStringSubmatch(j.Url)
 		source = SourceAlbum{id: matches[1]}
-	case regexUser.MatchString(j.url):
-		matches := regexUser.FindStringSubmatch(j.url)
+	case regexUser.MatchString(j.Url):
+		matches := regexUser.FindStringSubmatch(j.Url)
 		source = SourceUser{name: matches[1]}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", j.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", j.Url)
 	}
 
-	j.source = source
+	j.Source = source
 	return source, nil
-}
-
-func (j *JpgFish) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if j.responseMetadata == nil {
-		j.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       j.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.JpgFish,
-		Metadata:  j.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if j.source == nil {
-			j.source, err = j.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := j.fetchMedia(j.source, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (j *JpgFish) DownloadHeaders() map[string]string {
@@ -127,6 +73,7 @@ var _ types.Extractor = (*JpgFish)(nil)
 
 func (j *JpgFish) fetchMedia(
 	source types.SourceType,
+	_ int,
 	extensions []string,
 	_ bool,
 ) <-chan saktypes.Result[types.Media] {
@@ -185,13 +132,17 @@ func (j *JpgFish) dataToMedia(img Image, sourceName string) <-chan types.Media {
 	go func() {
 		defer close(out)
 
-		out <- types.NewMedia(img.Url, types.JpgFish, map[string]interface{}{
+		media, err := types.NewMedia(img.Url, types.JpgFish, map[string]interface{}{
 			"id":      img.Id,
 			"name":    img.Author,
 			"title":   img.Title,
 			"source":  strings.ToLower(sourceName),
 			"created": img.Published,
 		}, headers)
+		if err != nil {
+			return
+		}
+		out <- media
 	}()
 
 	return out

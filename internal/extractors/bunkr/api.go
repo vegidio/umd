@@ -75,8 +75,9 @@ func getAlbum(id string) ([]string, error) {
 	return ids, nil
 }
 
+var fileRegex = regexp.MustCompile(`(-[^.]+)`)
+
 func getFilename(url string) string {
-	fileRegex := regexp.MustCompile(`(-[^.]+)`)
 
 	matches := fileRegex.FindAllStringIndex(url, -1)
 	if len(matches) == 0 {

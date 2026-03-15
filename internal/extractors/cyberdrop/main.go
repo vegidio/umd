@@ -1,7 +1,6 @@
 package cyberdrop
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -12,104 +11,51 @@ import (
 )
 
 type Cyberdrop struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "cyberdrop.to", "cyberdrop.me", "cyberdrop.cr"):
-		return &Cyberdrop{Metadata: metadata, url: url, external: external}, nil
+		c := &Cyberdrop{}
+		c.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.Cyberdrop,
+		}
+		c.FetchMediaFn = c.fetchMedia
+		c.SourceTypeFn = c.SourceType
+		return c, nil
 	}
 
 	return nil, nil
 }
 
-func (c *Cyberdrop) Type() types.ExtractorType {
-	return types.Cyberdrop
-}
+var (
+	regexImage = regexp.MustCompile(`/f/([^/]+)/?$`)
+	regexAlbum = regexp.MustCompile(`/a/([^/]+)/?$`)
+)
 
 func (c *Cyberdrop) SourceType() (types.SourceType, error) {
-	regexImage := regexp.MustCompile(`/f/([^/]+)/?$`)
-	regexAlbum := regexp.MustCompile(`/a/([^/]+)/?$`)
 
 	var source types.SourceType
 
 	switch {
-	case regexImage.MatchString(c.url):
-		matches := regexImage.FindStringSubmatch(c.url)
+	case regexImage.MatchString(c.Url):
+		matches := regexImage.FindStringSubmatch(c.Url)
 		source = SourceMedia{id: matches[1]}
-	case regexAlbum.MatchString(c.url):
-		matches := regexAlbum.FindStringSubmatch(c.url)
+	case regexAlbum.MatchString(c.Url):
+		matches := regexAlbum.FindStringSubmatch(c.Url)
 		source = SourceAlbum{id: matches[1]}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", c.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", c.Url)
 	}
 
-	c.source = source
+	c.Source = source
 	return source, nil
-}
-
-func (c *Cyberdrop) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if c.responseMetadata == nil {
-		c.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       c.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.Cyberdrop,
-		Metadata:  c.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if c.source == nil {
-			c.source, err = c.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := c.fetchMedia(c.source, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (c *Cyberdrop) DownloadHeaders() map[string]string {
@@ -123,6 +69,7 @@ var _ types.Extractor = (*Cyberdrop)(nil)
 
 func (c *Cyberdrop) fetchMedia(
 	source types.SourceType,
+	_ int,
 	extensions []string,
 	_ bool,
 ) <-chan saktypes.Result[types.Media] {
@@ -204,12 +151,15 @@ func (c *Cyberdrop) dataToMedia(img Image, sourceName string) <-chan types.Media
 		defer close(out)
 
 		tempUrl := "https://cyberdrop.to/" + img.Name
-		media := types.NewMedia(tempUrl, types.Cyberdrop, map[string]interface{}{
+		media, err := types.NewMedia(tempUrl, types.Cyberdrop, map[string]interface{}{
 			"id":      img.Id,
 			"name":    img.Name,
 			"source":  strings.ToLower(sourceName),
 			"created": img.Published,
 		}, headers)
+		if err != nil {
+			return
+		}
 
 		media.Url = img.Url
 		out <- media

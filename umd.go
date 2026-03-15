@@ -20,7 +20,6 @@ import (
 // Umd represents a Universal Media Downloader instance.
 type Umd struct {
 	metadata types.Metadata
-	headers  map[string]string
 }
 
 // New creates a new instance of Umd.
@@ -31,7 +30,7 @@ type Umd struct {
 // # Returns:
 //   - Umd: A new instance of Umd.
 func New() *Umd {
-	return &Umd{metadata: make(Metadata), headers: nil}
+	return &Umd{metadata: make(Metadata)}
 }
 
 // WithMetadata sets the metadata for the Umd instance.

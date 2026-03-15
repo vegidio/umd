@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -21,6 +22,9 @@ type Response struct {
 
 	// Done is a channel used to signal when the media query is complete.
 	Done chan error
+
+	// Mu protects concurrent access to the Media slice.
+	Mu sync.RWMutex
 }
 
 // Error waits for the query to finish and returns any error that occurred during the process.
@@ -45,18 +49,22 @@ func (r *Response) Track(callback func(queried, total int)) error {
 	for {
 		select {
 		case <-ticker.C:
+			r.Mu.RLock()
 			total := len(r.Media)
+			r.Mu.RUnlock()
 			if total != oldValue {
 				callback(total-oldValue, total)
 				oldValue = total
 			}
 
-		case <-r.Done:
+		case err := <-r.Done:
+			r.Mu.RLock()
 			total := len(r.Media)
+			r.Mu.RUnlock()
 			if total != oldValue {
 				callback(total-oldValue, total)
 			}
-			return r.Error()
+			return err
 		}
 	}
 }

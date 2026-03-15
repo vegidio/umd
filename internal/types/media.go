@@ -33,10 +33,10 @@ func (m Media) String() string {
 		m.Url, m.Extension, m.Type, m.Extractor, m.Metadata)
 }
 
-func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interface{}, headers map[string]string) Media {
+func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interface{}, headers map[string]string) (Media, error) {
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
-		panic("Error parsing URL: " + err.Error())
+		return Media{}, fmt.Errorf("error parsing URL %q: %w", urlStr, err)
 	}
 
 	parsedURL.RawQuery = ""
@@ -54,7 +54,7 @@ func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interf
 		Extractor: extractor,
 		Metadata:  metadata,
 		Headers:   headers,
-	}
+	}, nil
 }
 
 // region - Private functions
@@ -71,7 +71,7 @@ func getExtension(urStr string) string {
 
 	u, err := url.Parse(urStr)
 	if err != nil {
-		panic(err)
+		return ""
 	}
 
 	ext := path.Ext(u.Path)

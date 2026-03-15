@@ -1,7 +1,6 @@
 package bunkr
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -12,12 +11,7 @@ import (
 )
 
 type Bunkr struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
@@ -25,97 +19,48 @@ func New(url string, metadata types.Metadata, external types.External) (types.Ex
 	case utils.HasHost(url, "bunkr.ac", "bunkr.ci", "bunkr.cr", "bunkr.fi", "bunkr.ph", "bunkr.pk",
 		"bunkr.ps", "bunkr.si", "bunkr.sk", "bunkr.ws", "bunkr.black", "bunkr.red", "bunkr.media", "bunkr.site",
 		"bunkr.ru"):
-		return &Bunkr{Metadata: metadata, url: url, external: external}, nil
+		b := &Bunkr{}
+		b.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.Bunkr,
+		}
+		b.FetchMediaFn = b.fetchMedia
+		b.SourceTypeFn = b.SourceType
+		return b, nil
 	}
 
 	return nil, nil
 }
 
-func (b *Bunkr) Type() types.ExtractorType {
-	return types.Bunkr
-}
+var (
+	regexMedia1 = regexp.MustCompile(`/[fv]/([^/]+)/?$`)
+	regexMedia2 = regexp.MustCompile(`cdn.+/([^/]+)/?$`)
+	regexAlbum  = regexp.MustCompile(`/a/([^/]+)/?$`)
+)
 
 func (b *Bunkr) SourceType() (types.SourceType, error) {
-	regexMedia1 := regexp.MustCompile(`/[fv]/([^/]+)/?$`)
-	regexMedia2 := regexp.MustCompile(`cdn.+/([^/]+)/?$`)
-	regexAlbum := regexp.MustCompile(`/a/([^/]+)/?$`)
-
 	var source types.SourceType
 
 	switch {
-	case regexMedia1.MatchString(b.url):
-		matches := regexMedia1.FindStringSubmatch(b.url)
+	case regexMedia1.MatchString(b.Url):
+		matches := regexMedia1.FindStringSubmatch(b.Url)
 		source = SourceMedia{id: matches[1]}
-	case regexMedia2.MatchString(b.url):
-		matches := regexMedia2.FindStringSubmatch(b.url)
+	case regexMedia2.MatchString(b.Url):
+		matches := regexMedia2.FindStringSubmatch(b.Url)
 		source = SourceMedia{id: matches[1]}
-	case regexAlbum.MatchString(b.url):
-		matches := regexAlbum.FindStringSubmatch(b.url)
+	case regexAlbum.MatchString(b.Url):
+		matches := regexAlbum.FindStringSubmatch(b.Url)
 		source = SourceAlbum{id: matches[1]}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", b.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", b.Url)
 	}
 
-	b.source = source
+	b.Source = source
 	return source, nil
-}
-
-func (b *Bunkr) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if b.responseMetadata == nil {
-		b.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       b.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.Bunkr,
-		Metadata:  b.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if b.source == nil {
-			b.source, err = b.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := b.fetchMedia(b.source, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (b *Bunkr) DownloadHeaders() map[string]string {
@@ -131,6 +76,7 @@ var _ types.Extractor = (*Bunkr)(nil)
 
 func (b *Bunkr) fetchMedia(
 	source types.SourceType,
+	_ int,
 	extensions []string,
 	_ bool,
 ) <-chan saktypes.Result[types.Media] {
@@ -211,12 +157,16 @@ func (b *Bunkr) dataToMedia(img Image, sourceName string) <-chan types.Media {
 	go func() {
 		defer close(out)
 
-		out <- types.NewMedia(img.Url, types.Bunkr, map[string]interface{}{
+		media, err := types.NewMedia(img.Url, types.Bunkr, map[string]interface{}{
 			"id":      img.Slug,
 			"name":    img.Name,
 			"source":  strings.ToLower(sourceName),
 			"created": img.Published,
 		}, headers)
+		if err != nil {
+			return
+		}
+		out <- media
 	}()
 
 	return out

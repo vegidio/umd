@@ -1,7 +1,6 @@
 package fapello
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -13,107 +12,55 @@ import (
 )
 
 type Fapello struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "fapello.com"):
-		return &Fapello{Metadata: metadata, url: url, external: external}, nil
+		f := &Fapello{}
+		f.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.Fapello,
+		}
+		f.FetchMediaFn = f.fetchMedia
+		f.SourceTypeFn = f.SourceType
+		return f, nil
 	}
 
 	return nil, nil
 }
 
-func (f *Fapello) Type() types.ExtractorType {
-	return types.Fapello
-}
+var (
+	regexPost   = regexp.MustCompile(`com/([a-zA-Z0-9-_.]+)/(\d+)`)
+	regexModel  = regexp.MustCompile(`com/([a-zA-Z0-9-_.]+)/?`)
+	regexPostId = regexp.MustCompile(`/(\d+)/?$`)
+)
 
 func (f *Fapello) SourceType() (types.SourceType, error) {
-	regexPost := regexp.MustCompile(`com/([a-zA-Z0-9-_.]+)/(\d+)`)
-	regexModel := regexp.MustCompile(`com/([a-zA-Z0-9-_.]+)/?`)
 
 	var source types.SourceType
 
 	switch {
-	case regexPost.MatchString(f.url):
-		matches := regexPost.FindStringSubmatch(f.url)
+	case regexPost.MatchString(f.Url):
+		matches := regexPost.FindStringSubmatch(f.Url)
 		name := matches[1]
 		id := matches[2]
 		source = SourcePost{Id: id, name: name}
-	case regexModel.MatchString(f.url):
-		matches := regexModel.FindStringSubmatch(f.url)
+	case regexModel.MatchString(f.Url):
+		matches := regexModel.FindStringSubmatch(f.Url)
 		name := matches[1]
 		source = SourceModel{name: name}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", f.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", f.Url)
 	}
 
-	f.source = source
+	f.Source = source
 	return source, nil
-}
-
-func (f *Fapello) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if f.responseMetadata == nil {
-		f.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       f.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.Fapello,
-		Metadata:  f.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if f.source == nil {
-			f.source, err = f.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := f.fetchMedia(f.source, limit, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (f *Fapello) DownloadHeaders() map[string]string {
@@ -211,12 +158,16 @@ func (f *Fapello) dataToMedia(post Post, sourceName string) <-chan types.Media {
 		defer close(out)
 		now := time.Date(1980, time.October, 6, 17, 7, 0, 0, time.UTC)
 
-		out <- types.NewMedia(post.Url, types.Fapello, map[string]interface{}{
+		media, err := types.NewMedia(post.Url, types.Fapello, map[string]interface{}{
 			"id":      post.Id,
 			"name":    post.Name,
 			"source":  strings.ToLower(sourceName),
 			"created": now.Add(time.Duration(post.Id*24) * time.Hour),
 		}, headers)
+		if err != nil {
+			return
+		}
+		out <- media
 	}()
 
 	return out

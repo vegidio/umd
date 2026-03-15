@@ -35,6 +35,7 @@ require (
 	github.com/keybase/go-keychain v0.0.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/zalando/go-keyring v0.2.6 // indirect
 	github.com/zeebo/assert v1.3.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

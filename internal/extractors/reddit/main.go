@@ -1,7 +1,6 @@
 package reddit
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -16,115 +15,62 @@ import (
 const Host = "reddit.com"
 
 type Reddit struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, Host):
-		return &Reddit{Metadata: metadata, url: url, external: external}, nil
+		r := &Reddit{}
+		r.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.Reddit,
+		}
+		r.FetchMediaFn = r.fetchMedia
+		r.SourceTypeFn = r.SourceType
+		return r, nil
 	}
 
 	return nil, nil
 }
 
-func (r *Reddit) Type() types.ExtractorType {
-	return types.Reddit
-}
+var (
+	regexSubmission = regexp.MustCompile(`/(?:r|u|user)/([^/?]+)/comments/([^/\n?]+)`)
+	regexUser       = regexp.MustCompile(`/(?:u|user)/([^/\n?]+)`)
+	regexSubreddit  = regexp.MustCompile(`/r/([^/\n]+)`)
+)
 
 func (r *Reddit) SourceType() (types.SourceType, error) {
-	regexSubmission := regexp.MustCompile(`/(?:r|u|user)/([^/?]+)/comments/([^/\n?]+)`)
-	regexUser := regexp.MustCompile(`/(?:u|user)/([^/\n?]+)`)
-	regexSubreddit := regexp.MustCompile(`/r/([^/\n]+)`)
 
 	var source types.SourceType
 	var name string
 
 	switch {
-	case regexSubmission.MatchString(r.url):
-		matches := regexSubmission.FindStringSubmatch(r.url)
+	case regexSubmission.MatchString(r.Url):
+		matches := regexSubmission.FindStringSubmatch(r.Url)
 		name = matches[1]
 		id := matches[2]
 		source = SourceSubmission{Id: id, name: name}
 
-	case regexUser.MatchString(r.url):
-		matches := regexUser.FindStringSubmatch(r.url)
+	case regexUser.MatchString(r.Url):
+		matches := regexUser.FindStringSubmatch(r.Url)
 		name = matches[1]
 		source = SourceUser{name: name}
 
-	case regexSubreddit.MatchString(r.url):
-		matches := regexSubreddit.FindStringSubmatch(r.url)
+	case regexSubreddit.MatchString(r.Url):
+		matches := regexSubreddit.FindStringSubmatch(r.Url)
 		name = matches[1]
 		source = SourceSubreddit{name: name}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", r.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", r.Url)
 	}
 
-	r.source = source
+	r.Source = source
 	return source, nil
-}
-
-func (r *Reddit) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if r.responseMetadata == nil {
-		r.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       r.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.Reddit,
-		Metadata:  r.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if r.source == nil {
-			r.source, err = r.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := r.fetchMedia(r.source, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (r *Reddit) DownloadHeaders() map[string]string {
@@ -137,7 +83,7 @@ var _ types.Extractor = (*Reddit)(nil)
 // region - Private methods
 
 func (r *Reddit) getNewOrSavedToken() (string, error) {
-	token, exists := r.Metadata[types.Reddit]["token"].(string)
+	token, exists := r.BaseExtractor.Metadata[types.Reddit]["token"].(string)
 
 	if !exists {
 		log.Debug("Issuing new Reddit token")
@@ -153,12 +99,12 @@ func (r *Reddit) getNewOrSavedToken() (string, error) {
 
 		token = auth.Token
 
-		if r.responseMetadata[types.Reddit] == nil {
-			r.responseMetadata[types.Reddit] = make(map[string]interface{})
+		if r.ResponseMetadata[types.Reddit] == nil {
+			r.ResponseMetadata[types.Reddit] = make(map[string]interface{})
 		}
 
 		// Save the token to be reused in the future
-		r.responseMetadata[types.Reddit]["token"] = token
+		r.ResponseMetadata[types.Reddit]["token"] = token
 	} else {
 		log.WithFields(log.Fields{
 			"token": token,
@@ -170,6 +116,7 @@ func (r *Reddit) getNewOrSavedToken() (string, error) {
 
 func (r *Reddit) fetchMedia(
 	source types.SourceType,
+	_ int,
 	extensions []string,
 	deep bool,
 ) <-chan saktypes.Result[types.Media] {
@@ -203,7 +150,7 @@ func (r *Reddit) fetchMedia(
 			media := r.dataToMedia(child.Data, source.Type(), source.Name())
 			if deep {
 				media = async.ConcurrentChannel(media, 5, func(m types.Media) types.Media {
-					return r.external.ExpandMedia(m, Host, &r.responseMetadata)
+					return r.External.ExpandMedia(m, Host, &r.ResponseMetadata)
 				})
 			}
 
@@ -226,11 +173,15 @@ func (r *Reddit) dataToMedia(child ChildData, sourceName string, name string) <-
 			url = child.Url
 		}
 
-		out <- types.NewMedia(url, types.Reddit, map[string]interface{}{
+		media, err := types.NewMedia(url, types.Reddit, map[string]interface{}{
 			"source":  strings.ToLower(sourceName),
 			"name":    name,
 			"created": child.Created.Time,
 		}, headers)
+		if err != nil {
+			return
+		}
+		out <- media
 	}()
 
 	return out

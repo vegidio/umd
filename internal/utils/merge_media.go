@@ -1,14 +1,12 @@
 package utils
 
-import (
-	"github.com/samber/lo"
-	"github.com/vegidio/umd/internal/types"
-)
+import "github.com/vegidio/umd/internal/types"
 
-func MergeMedia(media *[]types.Media, newMedia types.Media) int {
-	*media = lo.UniqBy(append(*media, newMedia), func(m types.Media) string {
-		return m.Url
-	})
+func MergeMedia(media *[]types.Media, seen map[string]struct{}, newMedia types.Media) int {
+	if _, exists := seen[newMedia.Url]; !exists {
+		seen[newMedia.Url] = struct{}{}
+		*media = append(*media, newMedia)
+	}
 
 	return len(*media)
 }

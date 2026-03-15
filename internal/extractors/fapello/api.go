@@ -3,7 +3,6 @@ package fapello
 import (
 	"fmt"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -67,7 +66,7 @@ func getLinks(name string, limit int) ([]string, error) {
 func getPost(url string, name string) (*Post, error) {
 	mediaUrl := ""
 
-	matches := regexp.MustCompile(`/(\d+)/?$`).FindStringSubmatch(url)
+	matches := regexPostId.FindStringSubmatch(url)
 	id, _ := strconv.Atoi(matches[1])
 
 	html, err := f.GetText(url)

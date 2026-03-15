@@ -1,7 +1,6 @@
 package redgifs
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"regexp"
@@ -14,107 +13,54 @@ import (
 )
 
 type Redgifs struct {
-	Metadata types.Metadata
-
-	url              string
-	source           types.SourceType
-	responseMetadata types.Metadata
-	external         types.External
+	types.BaseExtractor
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "redgifs.com"):
-		return &Redgifs{Metadata: metadata, url: url, external: external}, nil
+		r := &Redgifs{}
+		r.BaseExtractor = types.BaseExtractor{
+			Metadata: metadata,
+			Url:      url,
+			External: external,
+			ExtType:  types.RedGifs,
+		}
+		r.FetchMediaFn = r.fetchMedia
+		r.SourceTypeFn = r.SourceType
+		return r, nil
 	}
 
 	return nil, nil
 }
 
-func (r *Redgifs) Type() types.ExtractorType {
-	return types.RedGifs
-}
+var (
+	regexVideo = regexp.MustCompile(`/(ifr|watch)/([^/\n?]+)`)
+	regexUser  = regexp.MustCompile(`/users/([^/\n?]+)`)
+)
 
 func (r *Redgifs) SourceType() (types.SourceType, error) {
-	regexVideo := regexp.MustCompile(`/(ifr|watch)/([^/\n?]+)`)
-	regexUser := regexp.MustCompile(`/users/([^/\n?]+)`)
 
 	var source types.SourceType
 	var name string
 
 	switch {
-	case regexVideo.MatchString(r.url):
-		matches := regexVideo.FindStringSubmatch(r.url)
+	case regexVideo.MatchString(r.Url):
+		matches := regexVideo.FindStringSubmatch(r.Url)
 		name = matches[2]
 		source = SourceVideo{name: name}
-	case regexUser.MatchString(r.url):
-		matches := regexUser.FindStringSubmatch(r.url)
+	case regexUser.MatchString(r.Url):
+		matches := regexUser.FindStringSubmatch(r.Url)
 		name = matches[1]
 		source = SourceUser{name: name}
 	}
 
 	if source == nil {
-		return nil, fmt.Errorf("source type not found for URL: %s", r.url)
+		return nil, fmt.Errorf("source type not found for URL: %s", r.Url)
 	}
 
-	r.source = source
+	r.Source = source
 	return source, nil
-}
-
-func (r *Redgifs) QueryMedia(limit int, extensions []string, deep bool) (*types.Response, func()) {
-	var err error
-	ctx, stop := context.WithCancel(context.Background())
-
-	if r.responseMetadata == nil {
-		r.responseMetadata = make(types.Metadata)
-	}
-
-	response := &types.Response{
-		Url:       r.url,
-		Media:     make([]types.Media, 0),
-		Extractor: types.RedGifs,
-		Metadata:  r.responseMetadata,
-		Done:      make(chan error),
-	}
-
-	go func() {
-		defer close(response.Done)
-
-		if r.source == nil {
-			r.source, err = r.SourceType()
-			if err != nil {
-				response.Done <- err
-				return
-			}
-		}
-
-		mediaCh := r.fetchMedia(r.source, limit, extensions, deep)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case result, ok := <-mediaCh:
-				if !ok {
-					return
-				}
-
-				if result.Err != nil {
-					response.Done <- result.Err
-					return
-				}
-
-				// Limiting the number of results
-				if utils.MergeMedia(&response.Media, result.Data) >= limit {
-					response.Media = response.Media[:limit]
-					return
-				}
-			}
-		}
-	}()
-
-	return response, stop
 }
 
 func (r *Redgifs) DownloadHeaders() map[string]string {
@@ -127,7 +73,7 @@ var _ types.Extractor = (*Redgifs)(nil)
 // region - Private methods
 
 func (r *Redgifs) getNewOrSavedToken() (string, error) {
-	token, exists := r.Metadata[types.RedGifs]["token"].(string)
+	token, exists := r.BaseExtractor.Metadata[types.RedGifs]["token"].(string)
 
 	if !exists {
 		log.Debug("Issuing new RedGifs token")
@@ -143,12 +89,12 @@ func (r *Redgifs) getNewOrSavedToken() (string, error) {
 
 		token = auth.Token
 
-		if r.responseMetadata[types.RedGifs] == nil {
-			r.responseMetadata[types.RedGifs] = make(map[string]interface{})
+		if r.ResponseMetadata[types.RedGifs] == nil {
+			r.ResponseMetadata[types.RedGifs] = make(map[string]interface{})
 		}
 
 		// Save the token to be reused in the future
-		r.responseMetadata[types.RedGifs]["token"] = token
+		r.ResponseMetadata[types.RedGifs]["token"] = token
 	} else {
 		log.WithFields(log.Fields{
 			"token": token,
@@ -266,12 +212,16 @@ func (r *Redgifs) dataToMedia(gifs []Gif, sourceName string) <-chan types.Media 
 				url = gif.Url.Sd
 			}
 
-			out <- types.NewMedia(url, types.RedGifs, map[string]interface{}{
+			media, err := types.NewMedia(url, types.RedGifs, map[string]interface{}{
 				"name":    gif.Username,
 				"source":  strings.ToLower(sourceName),
 				"created": gif.Created.Time,
 				"id":      gif.Id,
 			}, headers)
+			if err != nil {
+				continue
+			}
+			out <- media
 		}
 	}()
 
