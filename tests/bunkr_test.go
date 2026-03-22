@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,6 +9,10 @@ import (
 )
 
 func TestBunkr(t *testing.T) {
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		t.Skip("This test doesn't work when executed from GitHub Actions")
+	}
+
 	tests := []struct {
 		name           string
 		url            string
