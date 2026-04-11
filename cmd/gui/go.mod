@@ -78,8 +78,3 @@ require (
 	google.golang.org/protobuf v1.36.10 // indirect
 	www.velocidex.com/golang/go-ese v0.2.0 // indirect
 )
-
-// replace github.com/wailsapp/wails/v2 v2.9.2 => /Users/vegidio/go/pkg/mod
-
-// Local shared code
-replace github.com/vegidio/shared => ../shared

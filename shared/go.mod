@@ -6,6 +6,7 @@ require (
 	github.com/dromara/dongle v1.0.1
 	github.com/samber/lo v1.52.0
 	github.com/spf13/afero v1.15.0
+	github.com/stretchr/testify v1.11.1
 	github.com/vegidio/go-sak v0.0.0-20260305203127-56f5f4053f7f
 	github.com/vegidio/umd v0.0.0-20250918022752-c66c1259c887
 	github.com/zeebo/blake3 v0.2.4
@@ -34,8 +35,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/keybase/go-keychain v0.0.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/zalando/go-keyring v0.2.6 // indirect
 	github.com/zeebo/assert v1.3.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
@@ -56,5 +57,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	www.velocidex.com/golang/go-ese v0.2.0 // indirect
 )
