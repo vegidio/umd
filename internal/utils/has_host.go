@@ -1,11 +1,11 @@
 package utils
 
 import (
-	"fmt"
 	urlpkg "net/url"
 	"strings"
 
 	"github.com/samber/lo"
+	log "github.com/sirupsen/logrus"
 )
 
 // HasHost checks if the given URL's hostname matches or ends with any of the provided hostnames. It parses the URL,
@@ -28,7 +28,7 @@ import (
 func HasHost(url string, hostnames ...string) bool {
 	parsedUrl, err := urlpkg.Parse(url)
 	if err != nil {
-		fmt.Println("Invalid URL:", err)
+		log.WithError(err).Debug("Invalid URL")
 		return false
 	}
 

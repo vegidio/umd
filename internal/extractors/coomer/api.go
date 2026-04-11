@@ -10,10 +10,9 @@ import (
 )
 
 var f = fetch.New(nil, 10, false)
-var baseUrl string
 var cssHeaders = map[string]string{"Accept": "text/css"}
 
-func getProfile(service string, user string, headers map[string]string) (*Profile, error) {
+func getProfile(baseUrl string, service string, user string, headers map[string]string) (*Profile, error) {
 	maps.Copy(headers, cssHeaders)
 
 	var profile *Profile
@@ -29,7 +28,7 @@ func getProfile(service string, user string, headers map[string]string) (*Profil
 	return profile, nil
 }
 
-func getUser(profile Profile, headers map[string]string) <-chan types.Result[Response] {
+func getUser(baseUrl string, profile Profile, headers map[string]string) <-chan types.Result[Response] {
 	out := make(chan types.Result[Response])
 
 	maps.Copy(headers, cssHeaders)
@@ -54,7 +53,7 @@ func getUser(profile Profile, headers map[string]string) <-chan types.Result[Res
 			}
 
 			for _, post := range posts {
-				result := <-getPost(profile, post.Id, headers)
+				result := <-getPost(baseUrl, profile, post.Id, headers)
 				if result.Err != nil {
 					out <- types.Result[Response]{Err: result.Err}
 					continue
@@ -70,7 +69,7 @@ func getUser(profile Profile, headers map[string]string) <-chan types.Result[Res
 	return out
 }
 
-func getPost(profile Profile, postId string, headers map[string]string) <-chan types.Result[Response] {
+func getPost(baseUrl string, profile Profile, postId string, headers map[string]string) <-chan types.Result[Response] {
 	out := make(chan types.Result[Response])
 
 	maps.Copy(headers, cssHeaders)
@@ -98,7 +97,7 @@ func getPost(profile Profile, postId string, headers map[string]string) <-chan t
 		})
 
 		if biggestRevision.Post.RevisionId > 0 && (len(response.Images)+len(response.Videos)) < len(biggestRevision.Post.Attachments) {
-			out <- getRevision(profile, postId, biggestRevision.Post.RevisionId, headers)
+			out <- getRevision(baseUrl, profile, postId, biggestRevision.Post.RevisionId, headers)
 			return
 		}
 
@@ -108,7 +107,7 @@ func getPost(profile Profile, postId string, headers map[string]string) <-chan t
 	return out
 }
 
-func getRevision(profile Profile, postId string, revisionId int, headers map[string]string) types.Result[Response] {
+func getRevision(baseUrl string, profile Profile, postId string, revisionId int, headers map[string]string) types.Result[Response] {
 	var response ResponseRevision
 	url := fmt.Sprintf(baseUrl+"/api/v1/%s/user/%s/post/%s/revision/%d", profile.Service, profile.Id, postId, revisionId)
 	resp, err := f.GetResult(url, headers, &response)

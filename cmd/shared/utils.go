@@ -10,6 +10,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/afero"
 	"github.com/vegidio/go-sak/fetch"
+	"github.com/vegidio/umd"
 	"github.com/zeebo/blake3"
 )
 
@@ -90,16 +91,8 @@ func CreateHashSuffix(str string) string {
 }
 
 func GetMediaType(filePath string) string {
-	lowerExt := strings.TrimPrefix(filepath.Ext(filePath), ".")
-
-	switch lowerExt {
-	case "avif", "gif", "jpg", "jpeg", "png", "webp":
-		return "image"
-	case "gifv", "m4v", "mkv", "mov", "mp4", "webm":
-		return "video"
-	default:
-		return "unkwn"
-	}
+	ext := strings.TrimPrefix(filepath.Ext(filePath), ".")
+	return strings.ToLower(umd.GetMediaType(ext).String())
 }
 
 // GetCookies retrieves cookies based on the specified type and location.

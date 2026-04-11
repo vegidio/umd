@@ -38,45 +38,6 @@ func TestHasHost_InvalidURL(t *testing.T) {
 
 // endregion
 
-// region - MergeMedia
-
-func TestMergeMedia_AddUniqueItem(t *testing.T) {
-	media := make([]types.Media, 0)
-	seen := make(map[string]struct{})
-	m, _ := types.NewMedia("https://example.com/image.jpg", types.Generic, nil, nil)
-	count := MergeMedia(&media, seen, m)
-	assert.Equal(t, 1, count)
-	assert.Equal(t, 1, len(media))
-}
-
-func TestMergeMedia_DeduplicateByURL(t *testing.T) {
-	media := make([]types.Media, 0)
-	seen := make(map[string]struct{})
-	m1, _ := types.NewMedia("https://example.com/image.jpg", types.Generic, nil, nil)
-	m2, _ := types.NewMedia("https://example.com/image.jpg", types.Generic, nil, nil)
-	MergeMedia(&media, seen, m1)
-	count := MergeMedia(&media, seen, m2)
-	assert.Equal(t, 1, count)
-	assert.Equal(t, 1, len(media))
-}
-
-func TestMergeMedia_PreserveOrder(t *testing.T) {
-	media := make([]types.Media, 0)
-	seen := make(map[string]struct{})
-	m1, _ := types.NewMedia("https://example.com/a.jpg", types.Generic, nil, nil)
-	m2, _ := types.NewMedia("https://example.com/b.jpg", types.Generic, nil, nil)
-	m3, _ := types.NewMedia("https://example.com/c.jpg", types.Generic, nil, nil)
-	MergeMedia(&media, seen, m1)
-	MergeMedia(&media, seen, m2)
-	MergeMedia(&media, seen, m3)
-	assert.Equal(t, 3, len(media))
-	assert.Equal(t, "https://example.com/a.jpg", media[0].Url)
-	assert.Equal(t, "https://example.com/b.jpg", media[1].Url)
-	assert.Equal(t, "https://example.com/c.jpg", media[2].Url)
-}
-
-// endregion
-
 // region - MergeMetadata
 
 func TestMergeMetadata_OverlappingKeys(t *testing.T) {

@@ -10,6 +10,8 @@ import (
 	"github.com/vegidio/umd"
 )
 
+// cancelDownloads holds the cancel function for the current download session.
+// Only one download session is supported at a time; starting a new one replaces the previous cancel function.
 var cancelDownloads func()
 
 func DownloadAll(
@@ -51,20 +53,25 @@ func ResponseToDownload(response *fetch.Response) Download {
 
 func CreateFilePath(directory string, media umd.Media) string {
 	var t time.Time
-	var err error
 
-	n := media.Metadata["name"].(string)
+	n, _ := media.Metadata["name"].(string)
+	if n == "" {
+		n = "unknown"
+	}
 	suffix := CreateHashSuffix(media.Url)
 
 	// If the array of Media is coming from the JS code, the values in the Metadata map are strings
-	timeStr, ok := media.Metadata["created"].(string)
-	if ok {
-		t, err = time.Parse(time.RFC3339, timeStr)
+	switch v := media.Metadata["created"].(type) {
+	case string:
+		var err error
+		t, err = time.Parse(time.RFC3339, v)
 		if err != nil {
 			t = time.Now()
 		}
-	} else {
-		t = media.Metadata["created"].(time.Time)
+	case time.Time:
+		t = v
+	default:
+		t = time.Now()
 	}
 
 	timestamp := CreateTimestamp(t.Unix())

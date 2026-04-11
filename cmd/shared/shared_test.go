@@ -115,7 +115,7 @@ func TestGetMediaType_VideoExtensions(t *testing.T) {
 }
 
 func TestGetMediaType_UnknownExtension(t *testing.T) {
-	assert.Equal(t, "unkwn", GetMediaType("file.pdf"))
+	assert.Equal(t, "unknown", GetMediaType("file.pdf"))
 }
 
 // endregion

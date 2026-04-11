@@ -41,7 +41,13 @@ func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interf
 
 	parsedURL.RawQuery = ""
 	cleanUrl := parsedURL.String()
-	extension := getExtension(cleanUrl)
+
+	var extension string
+	if IsBunkrRedirectURL(cleanUrl) {
+		extension = ""
+	} else {
+		extension = getExtension(cleanUrl)
+	}
 
 	if metadata == nil {
 		metadata = make(map[string]interface{})
@@ -50,7 +56,7 @@ func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interf
 	return Media{
 		Url:       urlStr,
 		Extension: extension,
-		Type:      getType(extension),
+		Type:      GetType(extension),
 		Extractor: extractor,
 		Metadata:  metadata,
 		Headers:   headers,
@@ -60,15 +66,6 @@ func NewMedia(urlStr string, extractor ExtractorType, metadata map[string]interf
 // region - Private functions
 
 func getExtension(urStr string) string {
-	// TODO: I hate Bunkr; I need to come up with a better way to handle if a URL is a direct link to a file or
-	//  a link redirecting to something else.
-	if strings.Contains(urStr, "bunkr") &&
-		(strings.Contains(urStr, "//cdn") ||
-			strings.Contains(urStr, "/f/") ||
-			strings.Contains(urStr, "/v/")) {
-		return ""
-	}
-
 	u, err := url.Parse(urStr)
 	if err != nil {
 		return ""
@@ -82,7 +79,16 @@ func getExtension(urStr string) string {
 	return strings.ToLower(ext[1:])
 }
 
-func getType(extension string) MediaType {
+// IsBunkrRedirectURL returns true if the URL is a Bunkr page URL (not a direct media link).
+// These URLs look like media files but are actually pages that redirect to the real media.
+func IsBunkrRedirectURL(urlStr string) bool {
+	return strings.Contains(urlStr, "bunkr") &&
+		(strings.Contains(urlStr, "//cdn") ||
+			strings.Contains(urlStr, "/f/") ||
+			strings.Contains(urlStr, "/v/"))
+}
+
+func GetType(extension string) MediaType {
 	lowerExt := strings.ToLower(extension)
 
 	switch lowerExt {

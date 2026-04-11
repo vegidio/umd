@@ -12,15 +12,20 @@ import (
 type Coomer struct {
 	types.BaseExtractor
 
-	services string
+	baseUrl   string
+	regexPost *regexp.Regexp
+	regexUser *regexp.Regexp
 }
 
 func New(url string, metadata types.Metadata, external types.External) (types.Extractor, error) {
 	switch {
 	case utils.HasHost(url, "coomer.party", "coomer.st", "coomer.su"):
-		baseUrl = "https://coomer.st"
-
-		c := &Coomer{services: "onlyfans|fansly|candfans"}
+		services := "onlyfans|fansly|candfans"
+		c := &Coomer{
+			baseUrl:   "https://coomer.st",
+			regexPost: regexp.MustCompile(`(` + services + `)/user/([^/]+)/post/([^/\n?]+)`),
+			regexUser: regexp.MustCompile(`(` + services + `)/user/([^/\n?]+)`),
+		}
 		c.BaseExtractor = types.BaseExtractor{
 			Metadata: metadata,
 			Url:      url,
@@ -32,9 +37,12 @@ func New(url string, metadata types.Metadata, external types.External) (types.Ex
 		return c, nil
 
 	case utils.HasHost(url, "kemono.party", "kemono.su", "kemono.cr"):
-		baseUrl = "https://kemono.cr"
-
-		c := &Coomer{services: "patreon|fanbox|discord|fantia|afdian|boosty|gumroad|subscribestar|dlsite"}
+		services := "patreon|fanbox|discord|fantia|afdian|boosty|gumroad|subscribestar|dlsite"
+		c := &Coomer{
+			baseUrl:   "https://kemono.cr",
+			regexPost: regexp.MustCompile(`(` + services + `)/user/([^/]+)/post/([^/\n?]+)`),
+			regexUser: regexp.MustCompile(`(` + services + `)/user/([^/\n?]+)`),
+		}
 		c.BaseExtractor = types.BaseExtractor{
 			Metadata: metadata,
 			Url:      url,
@@ -50,22 +58,19 @@ func New(url string, metadata types.Metadata, external types.External) (types.Ex
 }
 
 func (c *Coomer) SourceType() (types.SourceType, error) {
-	regexPost := regexp.MustCompile(`(` + c.services + `)/user/([^/]+)/post/([^/\n?]+)`)
-	regexUser := regexp.MustCompile(`(` + c.services + `)/user/([^/\n?]+)`)
-
 	var source types.SourceType
 	var user string
 
 	switch {
-	case regexPost.MatchString(c.Url):
-		matches := regexPost.FindStringSubmatch(c.Url)
+	case c.regexPost.MatchString(c.Url):
+		matches := c.regexPost.FindStringSubmatch(c.Url)
 		service := matches[1]
 		user = matches[2]
 		id := matches[3]
 		source = SourcePost{Service: service, Id: id, name: user}
 
-	case regexUser.MatchString(c.Url):
-		matches := regexUser.FindStringSubmatch(c.Url)
+	case c.regexUser.MatchString(c.Url):
+		matches := c.regexUser.FindStringSubmatch(c.Url)
 		service := matches[1]
 		user = matches[2]
 		source = SourceUser{Service: service, name: user}
@@ -109,7 +114,7 @@ func (c *Coomer) fetchMedia(
 		headers["Cookie"] = cookie
 	}
 
-	profile, pErr := getProfile(source.(serviceSource).ServiceName(), source.Name(), headers)
+	profile, pErr := getProfile(c.baseUrl, source.(serviceSource).ServiceName(), source.Name(), headers)
 
 	if pErr != nil {
 		out <- saktypes.Result[types.Media]{Err: pErr}
@@ -122,9 +127,9 @@ func (c *Coomer) fetchMedia(
 
 		switch s := source.(type) {
 		case SourceUser:
-			responses = getUser(*profile, headers)
+			responses = getUser(c.baseUrl, *profile, headers)
 		case SourcePost:
-			responses = getPost(*profile, s.Id, headers)
+			responses = getPost(c.baseUrl, *profile, s.Id, headers)
 		}
 
 		for response := range responses {
@@ -148,24 +153,10 @@ func (c *Coomer) dataToMedia(response Response, name string) <-chan types.Media 
 	go func() {
 		defer close(out)
 
-		for _, image := range response.Images {
-			if image.Path != "" {
-				url := image.Server + "/data" + image.Path
-				media, err := types.NewMedia(url, c.ExtType, map[string]interface{}{
-					"source":  response.Post.Service,
-					"name":    name,
-					"created": response.Post.Published.Time,
-				}, headers)
-				if err != nil {
-					continue
-				}
-				out <- media
-			}
-		}
-
-		for _, video := range response.Videos {
-			if video.Path != "" {
-				url := video.Server + "/data" + video.Path
+		files := append(response.Images, response.Videos...)
+		for _, file := range files {
+			if file.Path != "" {
+				url := file.Server + "/data" + file.Path
 				media, err := types.NewMedia(url, c.ExtType, map[string]interface{}{
 					"source":  response.Post.Service,
 					"name":    name,
