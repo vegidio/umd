@@ -5,30 +5,14 @@ on:
     tags:
       - '*'
 
+permissions: {}
+
 env:
   BINARY_NAME: umd
 
 jobs:
-  version:
-    runs-on: ubuntu-latest
-    outputs:
-      VERSION: ${{ steps.vars.outputs.VERSION }}
-    steps:
-      # The `fetch-depth: 0` is important to fetch all the tags
-      - name: Code checkout
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Set version
-        id: vars
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-
   build-linux-amd64:
     runs-on: ubuntu-latest
-    needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
       OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
@@ -46,10 +30,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 
       - name: Install dependencies
         run: |
@@ -59,7 +44,7 @@ jobs:
 
       - name: Build Linux binaries
         run: |
-          node scripts/replace.mjs shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs shared/constants.go "<version>=>${{ github.ref_name }}"
           node scripts/replace.mjs shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
           node scripts/replace.mjs shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs shared/constants.go "EnvDevelopment=>EnvProduction"
@@ -73,7 +58,6 @@ jobs:
 
   build-linux-arm64:
     runs-on: ubuntu-24.04-arm
-    needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
       OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
@@ -91,10 +75,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 
       - name: Install dependencies
         run: |
@@ -104,7 +89,7 @@ jobs:
 
       - name: Build Linux binaries
         run: |
-          node scripts/replace.mjs shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs shared/constants.go "<version>=>${{ github.ref_name }}"
           node scripts/replace.mjs shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
           node scripts/replace.mjs shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs shared/constants.go "EnvDevelopment=>EnvProduction"
@@ -118,7 +103,6 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
-    needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
       OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
@@ -136,15 +120,16 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
           pnpm install -g @go-task/cli
 
       - name: Build MacOS binaries
         run: |
-          node scripts/replace.mjs shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs shared/constants.go "<version>=>${{ github.ref_name }}"
           node scripts/replace.mjs shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
           node scripts/replace.mjs shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs shared/constants.go "EnvDevelopment=>EnvProduction"
@@ -158,7 +143,6 @@ jobs:
 
   build-windows-amd64:
     runs-on: windows-latest
-    needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
       OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
@@ -176,10 +160,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 
       - name: Install dependencies
         run: |
@@ -187,7 +172,7 @@ jobs:
 
       - name: Build Windows binaries
         run: |
-          node scripts/replace.mjs shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs shared/constants.go "<version>=>${{ github.ref_name }}"
           node scripts/replace.mjs shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
           node scripts/replace.mjs shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs shared/constants.go "EnvDevelopment=>EnvProduction"
@@ -201,7 +186,6 @@ jobs:
 
   build-windows-arm64:
     runs-on: windows-11-arm
-    needs: [version]
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
       OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
@@ -227,10 +211,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 
       - name: Install dependencies
         run: |
@@ -244,7 +229,7 @@ jobs:
           CC: aarch64-w64-mingw32-gcc
           CXX: aarch64-w64-mingw32-g++
         run: |
-          node scripts/replace.mjs shared/constants.go "<version>=>${{ needs.version.outputs.VERSION }}"
+          node scripts/replace.mjs shared/constants.go "<version>=>${{ github.ref_name }}"
           node scripts/replace.mjs shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
           node scripts/replace.mjs shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs shared/constants.go "EnvDevelopment=>EnvProduction"
@@ -282,14 +267,14 @@ jobs:
 
       - name: Create the changelog
         run: |
-          pnpm install -g release-it @release-it/conventional-changelog@10.0.1
+          pnpm install -g release-it@19.2.4 @release-it/conventional-changelog@10.0.1
           release-it --ci
 
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ needs.version.outputs.VERSION }}
-          tag: ${{ needs.version.outputs.VERSION }}
+          name: ${{ github.ref_name }}
+          tag: ${{ github.ref_name }}
           bodyFile: CHANGELOG.md
           replacesArtifacts: true
           artifacts: binaries/*.zip

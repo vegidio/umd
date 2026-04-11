@@ -6,6 +6,8 @@ on:
       - main
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   pages:
     runs-on: ubuntu-latest
@@ -14,11 +16,12 @@ jobs:
     steps:
       - name: Set variables
         run: |
-          VERSION=$(curl -s "https://api.github.com/repos/$GITHUB_REPOSITORY/tags" | jq -r '.[0].name')
+          VERSION=$(curl -s -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/tags" | jq -r '.[0].name')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5

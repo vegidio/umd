@@ -7,21 +7,27 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+permissions: {}
+
 jobs:
   test:
+    # Tests require external resources (cookies/auth) that are not yet configured for CI
     if: false
     runs-on: ubuntu-latest
     steps:
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get cookies
-        run: echo ${{ secrets.VITE_MUI_LICENSE }} > tests/cookies.txt
+        run: echo "$COOKIES" > tests/cookies.txt
+        env:
+          COOKIES: ${{ secrets.VITE_MUI_LICENSE }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache: true
 
       - name: Run tests
         run: go test -v ./tests/...
