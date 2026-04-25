@@ -1,6 +1,7 @@
 {
     "plugins": {
         "@release-it/conventional-changelog": {
+            "header": "",
             "preset": {
                 "name": "conventionalcommits",
                 "types": [
@@ -17,6 +18,9 @@
                         "section": "Bug Fixes"
                     }
                 ]
+            },
+            "writerOpts": {
+                "headerPartial": ""
             },
             "infile": "CHANGELOG.md"
         }
