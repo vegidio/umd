@@ -9,10 +9,22 @@ permissions: {}
 
 env:
   BINARY_NAME: umd
+  GO_VERSION: '1.25'
+  WAILS_VERSION: 'v2.12.0'
+  PNPM_VERSION: '10'
 
 jobs:
-  build-linux-amd64:
-    runs-on: ubuntu-latest
+  build-linux:
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+            artifact: binaries-linux-amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+            artifact: binaries-linux-arm64
+    runs-on: ${{ matrix.runner }}
     env:
       OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
       OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
@@ -24,17 +36,17 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: ${{ env.GO_VERSION }}
           cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
 
       - name: Install dependencies
         run: |
@@ -48,57 +60,12 @@ jobs:
           node scripts/replace.mjs shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
           node scripts/replace.mjs shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
           node scripts/replace.mjs shared/constants.go "EnvDevelopment=>EnvProduction"
-          task package oses=linux archs=amd64
+          task package oses=linux archs=${{ matrix.arch }}
 
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binaries-linux
-          path: build/*.zip
-
-  build-linux-arm64:
-    runs-on: ubuntu-24.04-arm
-    env:
-      OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
-      OTEL_HEADER_AUTH: ${{ secrets.OTEL_HEADER_AUTH }}
-      VITE_MUI_LICENSE: ${{ secrets.VITE_MUI_LICENSE }}
-    steps:
-      - name: Code checkout
-        uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
-          cache: true
-
-      - name: Install Wails
-        run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
-
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y build-essential libgtk-3-dev libwebkit2gtk-4.1-dev libsoup-3.0-dev
-          pnpm install -g @go-task/cli
-
-      - name: Build Linux binaries
-        run: |
-          node scripts/replace.mjs shared/constants.go "<version>=>${{ github.ref_name }}"
-          node scripts/replace.mjs shared/constants.go "<otel_endpoint>=>$OTEL_ENDPOINT"
-          node scripts/replace.mjs shared/constants.go "<otel_auth>=>$OTEL_HEADER_AUTH"
-          node scripts/replace.mjs shared/constants.go "EnvDevelopment=>EnvProduction"
-          task package oses=linux archs=arm64
-
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: binaries-linux-arm64
+          name: ${{ matrix.artifact }}
           path: build/*.zip
 
   build-macos:
@@ -114,17 +81,17 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: ${{ env.GO_VERSION }}
           cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
           pnpm install -g @go-task/cli
 
       - name: Build MacOS binaries
@@ -154,17 +121,17 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: ${{ env.GO_VERSION }}
           cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
 
       - name: Install dependencies
         run: |
@@ -205,17 +172,17 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: ${{ env.GO_VERSION }}
           cache: true
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
 
       - name: Install dependencies
         run: |
@@ -243,7 +210,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: [build-linux-arm64, build-linux-amd64, build-macos, build-windows-amd64, build-windows-arm64]
+    needs: [build-linux, build-macos, build-windows-amd64, build-windows-arm64]
     permissions:
       contents: write
     steps:
@@ -263,7 +230,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Create the changelog
         run: |
