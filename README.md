@@ -22,13 +22,29 @@ It supports the following sites:
 <a href="https://simpcity.cr" target="_blank"><img src="https://img.shields.io/badge/SimpCity-3CB8C6?&style=for-the-badge&logo=wikiversity&logoColor=white"/></a>
 </p>
 
+## ⬇️ Installation
+
+This app has versions for Windows, macOS, and Linux. Download the [latest release](https://github.com/vegidio/umd/releases) that matches your computer architecture and operating system and unzip it.
+
+However, the recommended (and easiest) way to install **UMD** is using one of the scripts below. The script auto-detects your operating system and CPU architecture, downloads the correct one, and automatically installs the app:
+
+### macOS & Linux
+
+```bash
+curl -fsSL https://vegidio.github.io/umd/install.sh | sh
+```
+
+### Windows (PowerShell)
+
+```powershell
+irm https://vegidio.github.io/umd/install.ps1 | iex
+```
+
 ## 🖼️ Usage
 
 There are two ways to use this app: using the GUI or the CLI.
 
 The GUI is the easiest way to use the app, with an intuitive interface that allows you to download media files with just a few clicks. The CLI is more advanced and allows you to download media files in a more automated way.
-
-Both versions are available for Windows, macOS, and Linux. Download the [latest release](https://github.com/vegidio/umd/releases) that matches your computer architecture and operating system and follow the instructions below:
 
 ### GUI
 
@@ -50,7 +66,7 @@ Both versions are available for Windows, macOS, and Linux. Download the [latest 
 Run the command below in the terminal:
 
 ```bash
-$ umd-dl -d ~/Downloads/UMD <url>
+umd-dl -d ~/Downloads/UMD <url>
 ```
 
 Where:
@@ -118,7 +134,7 @@ If you want to build the GUI you will also need:
 With all the dependencies installed, in the project's root folder run the command:
 
 ```bash
-$ task <interface> os=<operating-system> arch=<architecture>
+task <interface> os=<operating-system> arch=<architecture>
 ```
 
 Where:
@@ -130,7 +146,7 @@ Where:
 For example, if I wanted to build a GUI version of the app for Windows, on architecture AMD64, I would run the command:
 
 ```bash
-$ task gui os=windows arch=amd64
+task gui os=windows arch=amd64
 ```
 
 ## 📈 Telemetry
