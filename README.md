@@ -24,9 +24,9 @@ It supports the following sites:
 
 ## ⬇️ Installation
 
-This app has versions for Windows, macOS, and Linux. Download the [latest release](https://github.com/vegidio/umd/releases) that matches your computer architecture and operating system and unzip it.
+This app has versions for Windows, macOS, and Linux. Download the [latest release](https://github.com/vegidio/umd/releases) that matches your computer architecture and operating system.
 
-However, the recommended (and easiest) way to install **UMD** is using one of the scripts below. The script auto-detects your operating system and CPU architecture, downloads the correct one, and automatically installs the app:
+However, the recommended (and easiest) way to install **UMD** is using one of the following scripts; copy and paste the command below in the terminal, and the script will automatically detect and install the correct version of the app:
 
 ### macOS & Linux
 
