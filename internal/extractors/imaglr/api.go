@@ -38,8 +38,8 @@ func getPost(id string) (*Post, error) {
 
 	author := data["user"].(map[string]any)["name"].(string)
 	mediaType := media["type"].(string)
-	mediaUrl := media["media_url"].(string)
-	thumbUrl := media["thumb_url"].(string)
+	mediaUrl, _ := media["media_url"].(string)
+	thumbUrl, _ := media["thumb_url"].(string)
 
 	timestamp := result["props"].(map[string]interface{})["post"].(map[string]interface{})["data"].(map[string]interface{})["created_at_timestamp"].(float64)
 	createdAt := time.Unix(int64(timestamp), 0)
