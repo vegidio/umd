@@ -1,6 +1,7 @@
 package simpcity
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,11 +11,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/vegidio/go-sak/fetch"
 	"github.com/vegidio/go-sak/types"
+	"github.com/vegidio/umd/internal/utils"
 )
 
 const BaseUrl = "https://simpcity.cr"
 
-func getThread(id string, startPage, maxPages int, headers map[string]string) <-chan types.Result[Post] {
+func getThread(ctx context.Context, id string, startPage, maxPages int, headers map[string]string) <-chan types.Result[Post] {
 	out := make(chan types.Result[Post])
 
 	go func() {
@@ -22,16 +24,16 @@ func getThread(id string, startPage, maxPages int, headers map[string]string) <-
 
 		f := fetch.New(headers, 0, false)
 		url := fmt.Sprintf("%s/threads/%s", BaseUrl, id)
-		html, err := f.GetText(url)
+		html, err := f.GetText(ctx, url)
 		if err != nil {
-			out <- types.Result[Post]{Err: err}
+			utils.Send(ctx, out, types.Result[Post]{Err: err})
 			return
 		}
 
 		// Get the number of pages
 		doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 		if err != nil {
-			out <- types.Result[Post]{Err: err}
+			utils.Send(ctx, out, types.Result[Post]{Err: err})
 			return
 		}
 
@@ -41,7 +43,7 @@ func getThread(id string, startPage, maxPages int, headers map[string]string) <-
 		pagesStr := doc.Find("li.pageNav-page > a").Last().Text()
 		pagesNum, err := strconv.Atoi(pagesStr)
 		if err != nil {
-			out <- types.Result[Post]{Err: err}
+			utils.Send(ctx, out, types.Result[Post]{Err: err})
 			return
 		}
 
@@ -58,27 +60,30 @@ func getThread(id string, startPage, maxPages int, headers map[string]string) <-
 				"url": pageUrl,
 			}).Debug("Parsing page")
 
-			pageHtml, pErr := f.GetText(pageUrl)
+			pageHtml, pErr := f.GetText(ctx, pageUrl)
 			if pErr != nil {
-				out <- types.Result[Post]{Err: pErr}
+				utils.Send(ctx, out, types.Result[Post]{Err: pErr})
 				return
 			}
 
 			pDoc, pErr := goquery.NewDocumentFromReader(strings.NewReader(pageHtml))
 			if pErr != nil {
-				out <- types.Result[Post]{Err: pErr}
+				utils.Send(ctx, out, types.Result[Post]{Err: pErr})
 				return
 			}
 
-			pDoc.Find("div.message-cell--main").Each(func(i int, q *goquery.Selection) {
+			for _, q := range pDoc.Find("div.message-cell--main").EachIter() {
 				post, postErr := parsePost(id, title, q)
 
-				if postErr != nil {
-					out <- types.Result[Post]{Err: postErr}
-				} else {
-					out <- types.Result[Post]{Data: *post}
+				item := types.Result[Post]{Err: postErr}
+				if postErr == nil {
+					item.Data = *post
 				}
-			})
+
+				if !utils.Send(ctx, out, item) {
+					return
+				}
+			}
 		}
 	}()
 

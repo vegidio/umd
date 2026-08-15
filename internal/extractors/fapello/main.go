@@ -1,6 +1,7 @@
 package fapello
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -73,6 +74,7 @@ var _ types.Extractor = (*Fapello)(nil)
 // region - Private methods
 
 func (f *Fapello) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	limit int,
 	extensions []string,
@@ -86,63 +88,67 @@ func (f *Fapello) fetchMedia(
 
 		switch s := source.(type) {
 		case SourcePost:
-			posts = f.fetchPost(s)
+			posts = f.fetchPost(ctx, s)
 		case SourceModel:
-			posts = f.fetchModel(s, limit)
+			posts = f.fetchModel(ctx, s, limit)
 		}
 
 		for post := range posts {
 			if post.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: post.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: post.Err})
 				return
 			}
 
-			media := f.dataToMedia(post.Data, source.Type())
-			utils.FilterMedia(media, extensions, out)
+			media := f.dataToMedia(ctx, post.Data, source.Type())
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (f *Fapello) fetchPost(source SourcePost) <-chan saktypes.Result[Post] {
+func (f *Fapello) fetchPost(ctx context.Context, source SourcePost) <-chan saktypes.Result[Post] {
 	result := make(chan saktypes.Result[Post])
 
 	go func() {
 		defer close(result)
 
 		link := fmt.Sprintf("https://fapello.com/%s/%s", source.name, source.Id)
-		post, err := getPost(link, source.name)
+		post, err := getPost(ctx, link, source.name)
 
 		if err != nil {
-			result <- saktypes.Result[Post]{Err: err}
-		} else {
-			result <- saktypes.Result[Post]{Data: *post}
+			utils.Send(ctx, result, saktypes.Result[Post]{Err: err})
+			return
 		}
+
+		utils.Send(ctx, result, saktypes.Result[Post]{Data: *post})
 	}()
 
 	return result
 }
 
-func (f *Fapello) fetchModel(source SourceModel, limit int) <-chan saktypes.Result[Post] {
+func (f *Fapello) fetchModel(ctx context.Context, source SourceModel, limit int) <-chan saktypes.Result[Post] {
 	result := make(chan saktypes.Result[Post])
 
 	go func() {
 		defer close(result)
 
-		links, err := getLinks(source.name, limit)
+		links, err := getLinks(ctx, source.name, limit)
 		if err != nil {
-			result <- saktypes.Result[Post]{Err: err}
+			utils.Send(ctx, result, saktypes.Result[Post]{Err: err})
 			return
 		}
 
 		for _, link := range links {
-			post, postErr := getPost(link, source.name)
+			post, postErr := getPost(ctx, link, source.name)
 
-			if postErr != nil {
-				result <- saktypes.Result[Post]{Err: postErr}
-			} else {
-				result <- saktypes.Result[Post]{Data: *post}
+			item := saktypes.Result[Post]{Err: postErr}
+			if postErr == nil {
+				item.Data = *post
+			}
+
+			if !utils.Send(ctx, result, item) {
+				return
 			}
 		}
 	}()
@@ -150,7 +156,7 @@ func (f *Fapello) fetchModel(source SourceModel, limit int) <-chan saktypes.Resu
 	return result
 }
 
-func (f *Fapello) dataToMedia(post Post, sourceName string) <-chan types.Media {
+func (f *Fapello) dataToMedia(ctx context.Context, post Post, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := f.DownloadHeaders()
 
@@ -167,7 +173,7 @@ func (f *Fapello) dataToMedia(post Post, sourceName string) <-chan types.Media {
 		if err != nil {
 			return
 		}
-		out <- media
+		utils.Send(ctx, out, media)
 	}()
 
 	return out

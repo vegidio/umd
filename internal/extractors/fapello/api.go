@@ -1,6 +1,7 @@
 package fapello
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strconv"
@@ -14,12 +15,12 @@ const BaseUrl = "https://fapello.com/"
 
 var f = fetch.New(nil, 0, false)
 
-func getLinks(name string, limit int) ([]string, error) {
+func getLinks(ctx context.Context, name string, limit int) ([]string, error) {
 	links := make([]string, 0)
 	numPages := 1
 
 	url := BaseUrl + name
-	html, err := f.GetText(url)
+	html, err := f.GetText(ctx, url)
 	if err != nil {
 		return links, err
 	}
@@ -44,7 +45,7 @@ func getLinks(name string, limit int) ([]string, error) {
 
 	for i := 1; i <= numPages; i++ {
 		pageUrl := fmt.Sprintf("%s/ajax/model/%s/page-%d/", BaseUrl, name, i)
-		html, err = f.GetText(pageUrl)
+		html, err = f.GetText(ctx, pageUrl)
 		if err != nil {
 			return links, err
 		}
@@ -63,13 +64,13 @@ func getLinks(name string, limit int) ([]string, error) {
 	return links, nil
 }
 
-func getPost(url string, name string) (*Post, error) {
+func getPost(ctx context.Context, url string, name string) (*Post, error) {
 	mediaUrl := ""
 
 	matches := regexPostId.FindStringSubmatch(url)
 	id, _ := strconv.Atoi(matches[1])
 
-	html, err := f.GetText(url)
+	html, err := f.GetText(ctx, url)
 	if err != nil {
 		return nil, err
 	}

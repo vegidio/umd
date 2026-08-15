@@ -1,6 +1,7 @@
 package bunkr
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"path/filepath"
@@ -16,7 +17,7 @@ const BaseUrl = "https://bunkr.cr/"
 
 var f = fetch.New(nil, 0, false)
 
-func getImage(slug string) (*Image, error) {
+func getImage(ctx context.Context, slug string) (*Image, error) {
 	var response *Response
 	url := "https://bunkr.cr/api/vs"
 	headers := map[string]string{
@@ -26,7 +27,7 @@ func getImage(slug string) (*Image, error) {
 		"slug": slug,
 	}
 
-	resp, err := f.PostResult(url, headers, body, &response)
+	resp, err := f.PostResult(ctx, url, headers, body, &response)
 
 	if err != nil {
 		return nil, err
@@ -52,11 +53,11 @@ func getImage(slug string) (*Image, error) {
 	}, nil
 }
 
-func getAlbum(id string) ([]string, error) {
+func getAlbum(ctx context.Context, id string) ([]string, error) {
 	ids := make([]string, 0)
 
 	url := fmt.Sprintf("%sa/%s", BaseUrl, id)
-	html, err := f.GetText(url)
+	html, err := f.GetText(ctx, url)
 	if err != nil {
 		return nil, err
 	}

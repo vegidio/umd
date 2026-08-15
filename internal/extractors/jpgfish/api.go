@@ -1,6 +1,7 @@
 package jpgfish
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -15,9 +16,9 @@ const BaseUrl = "https://jpg6.su/"
 
 var f = fetch.New(nil, 0, false)
 
-func getImage(id string) (*Image, error) {
+func getImage(ctx context.Context, id string) (*Image, error) {
 	url := fmt.Sprintf("%simg/%s", BaseUrl, id)
-	html, err := f.GetText(url)
+	html, err := f.GetText(ctx, url)
 	if err != nil {
 		return nil, err
 	}

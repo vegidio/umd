@@ -1,6 +1,7 @@
 package reddit
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/vegidio/go-sak/fetch"
 	"github.com/vegidio/go-sak/types"
+	"github.com/vegidio/umd/internal/utils"
 )
 
 const (
@@ -26,7 +28,7 @@ var httpClient = &http.Client{
 	},
 }
 
-func getToken() (*Auth, error) {
+func getToken(ctx context.Context) (*Auth, error) {
 	var auth *Auth
 	endpoint := BaseUrl + "api/v1/access_token"
 
@@ -35,7 +37,7 @@ func getToken() (*Auth, error) {
 		"device_id":  {"DO_NOT_TRACK_THIS_DEVICE"},
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(body.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(body.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func getToken() (*Auth, error) {
 //
 // # Returns:
 //   - <-chan model.Result[ChildData] - A receive-only channel that streams Reddit post data or errors
-func getSubmission(id string, token string) <-chan types.Result[ChildData] {
+func getSubmission(ctx context.Context, id string, token string) <-chan types.Result[ChildData] {
 	out := make(chan types.Result[ChildData])
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -87,26 +89,22 @@ func getSubmission(id string, token string) <-chan types.Result[ChildData] {
 
 		submissions := make([]Submission, 0)
 		url := fmt.Sprintf(OAuthUrl+"comments/%s.json?raw_json=1", id)
-		resp, err := f.GetResult(url, headers, &submissions)
+		resp, err := f.GetResult(ctx, url, headers, &submissions)
 
 		if err != nil {
-			out <- types.Result[ChildData]{Err: err}
+			utils.Send(ctx, out, types.Result[ChildData]{Err: err})
 			return
 		} else if resp.IsError() {
-			out <- types.Result[ChildData]{Err: fmt.Errorf("error fetching post id '%s' submissions: %s", id, resp.Status())}
+			utils.Send(ctx, out, types.Result[ChildData]{Err: fmt.Errorf("error fetching post id '%s' submissions: %s", id, resp.Status())})
 			return
 		}
 
 		submission := submissions[0]
 		for _, child := range submission.Data.Children {
-			if child.Data.IsGallery {
-				children := getGalleryData(child.Data)
-
-				for _, gallery := range children {
-					out <- types.Result[ChildData]{Data: gallery}
+			for _, item := range childItems(child.Data) {
+				if !utils.Send(ctx, out, types.Result[ChildData]{Data: item}) {
+					return
 				}
-			} else {
-				out <- types.Result[ChildData]{Data: child.Data}
 			}
 		}
 	}()
@@ -125,9 +123,9 @@ func getSubmission(id string, token string) <-chan types.Result[ChildData] {
 //
 // # Returns:
 //   - <-chan model.Result[ChildData] - A receive-only channel that streams submission data or errors
-func getUserSubmissions(user string, token string) <-chan types.Result[ChildData] {
+func getUserSubmissions(ctx context.Context, user string, token string) <-chan types.Result[ChildData] {
 	urlFmt := OAuthUrl + "user/%s/submitted.json?sort=new&raw_json=1&after=%s&limit=%d"
-	return streamSubmissions(urlFmt, user, token)
+	return streamSubmissions(ctx, urlFmt, user, token)
 }
 
 // getSubredditSubmissions retrieves a stream of subreddit submissions as a channel of types.Result[ChildData]. The
@@ -140,12 +138,12 @@ func getUserSubmissions(user string, token string) <-chan types.Result[ChildData
 //
 // # Returns:
 //   - <-chan types.Result[ChildData] - A receive-only channel that streams submission data or errors.
-func getSubredditSubmissions(subreddit string, token string) <-chan types.Result[ChildData] {
+func getSubredditSubmissions(ctx context.Context, subreddit string, token string) <-chan types.Result[ChildData] {
 	urlFmt := OAuthUrl + "r/%s/hot.json?raw_json=1&after=%s&limit=%d"
-	return streamSubmissions(urlFmt, subreddit, token)
+	return streamSubmissions(ctx, urlFmt, subreddit, token)
 }
 
-func streamSubmissions(urlFmt string, what string, token string) <-chan types.Result[ChildData] {
+func streamSubmissions(ctx context.Context, urlFmt string, what string, token string) <-chan types.Result[ChildData] {
 	out := make(chan types.Result[ChildData])
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -158,23 +156,21 @@ func streamSubmissions(urlFmt string, what string, token string) <-chan types.Re
 		for {
 			var submission *Submission
 			url := fmt.Sprintf(urlFmt, what, after, 100)
-			resp, err := f.GetResult(url, headers, &submission)
+			resp, err := f.GetResult(ctx, url, headers, &submission)
 
 			if err != nil {
-				out <- types.Result[ChildData]{Err: err}
+				utils.Send(ctx, out, types.Result[ChildData]{Err: err})
 				return
 			} else if resp.IsError() {
-				out <- types.Result[ChildData]{Err: fmt.Errorf("error fetching %s submissions: %s", what, resp.Status())}
+				utils.Send(ctx, out, types.Result[ChildData]{Err: fmt.Errorf("error fetching %s submissions: %s", what, resp.Status())})
 				return
 			}
 
 			for _, child := range submission.Data.Children {
-				if child.Data.IsGallery {
-					for _, galleryItem := range getGalleryData(child.Data) {
-						out <- types.Result[ChildData]{Data: galleryItem}
+				for _, item := range childItems(child.Data) {
+					if !utils.Send(ctx, out, types.Result[ChildData]{Data: item}) {
+						return
 					}
-				} else {
-					out <- types.Result[ChildData]{Data: child.Data}
 				}
 			}
 
@@ -185,6 +181,16 @@ func streamSubmissions(urlFmt string, what string, token string) <-chan types.Re
 		}
 	}()
 	return out
+}
+
+// childItems flattens a submission into the items to download: a gallery post carries several, any
+// other post is a single one.
+func childItems(child ChildData) []ChildData {
+	if child.IsGallery {
+		return getGalleryData(child)
+	}
+
+	return []ChildData{child}
 }
 
 func getGalleryData(child ChildData) []ChildData {

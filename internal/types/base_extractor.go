@@ -7,7 +7,13 @@ import (
 )
 
 // FetchMediaFunc is the signature for an extractor's media fetching function.
-type FetchMediaFunc func(source SourceType, limit int, extensions []string, deep bool) <-chan saktypes.Result[Media]
+type FetchMediaFunc func(
+	ctx context.Context,
+	source SourceType,
+	limit int,
+	extensions []string,
+	deep bool,
+) <-chan saktypes.Result[Media]
 
 // BaseExtractor provides the common fields and QueryMedia/Type implementations shared by all extractors.
 type BaseExtractor struct {
@@ -26,8 +32,17 @@ func (b *BaseExtractor) Type() ExtractorType {
 }
 
 func (b *BaseExtractor) QueryMedia(limit int, extensions []string, deep bool) (*Response, func()) {
+	return b.QueryMediaContext(context.Background(), limit, extensions, deep)
+}
+
+func (b *BaseExtractor) QueryMediaContext(
+	parent context.Context,
+	limit int,
+	extensions []string,
+	deep bool,
+) (*Response, func()) {
 	var err error
-	ctx, stop := context.WithCancel(context.Background())
+	ctx, stop := context.WithCancel(parent)
 
 	if b.ResponseMetadata == nil {
 		b.ResponseMetadata = make(Metadata)
@@ -46,6 +61,10 @@ func (b *BaseExtractor) QueryMedia(limit int, extensions []string, deep bool) (*
 	go func() {
 		defer close(response.Done)
 
+		// Whatever ends this loop - an error, the limit being reached or the channel drying up - the
+		// producers upstream must be told to stop, otherwise they block forever on their next send.
+		defer stop()
+
 		if b.Source == nil {
 			b.Source, err = b.SourceTypeFn()
 			if err != nil {
@@ -54,7 +73,7 @@ func (b *BaseExtractor) QueryMedia(limit int, extensions []string, deep bool) (*
 			}
 		}
 
-		mediaCh := b.FetchMediaFn(b.Source, limit, extensions, deep)
+		mediaCh := b.FetchMediaFn(ctx, b.Source, limit, extensions, deep)
 
 		for {
 			select {

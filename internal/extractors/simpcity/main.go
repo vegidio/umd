@@ -1,6 +1,7 @@
 package simpcity
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -78,6 +79,7 @@ var _ types.Extractor = (*SimpCity)(nil)
 // region - Private methods
 
 func (s *SimpCity) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	_ int,
 	extensions []string,
@@ -107,30 +109,30 @@ func (s *SimpCity) fetchMedia(
 
 		switch ss := source.(type) {
 		case SourceThread:
-			posts = getThread(ss.id, startPage, maxPages, headers)
+			posts = getThread(ctx, ss.id, startPage, maxPages, headers)
 		}
 
 		for post := range posts {
 			if post.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: post.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: post.Err})
 				return
 			}
 
-			media := s.dataToMedia(post.Data, source.Type())
+			media := s.dataToMedia(ctx, post.Data, source.Type())
 			if deep {
-				media = async.ConcurrentChannel(media, 5, func(m types.Media) types.Media {
-					return s.External.ExpandMedia(m, Host, &s.ResponseMetadata)
+				media = async.ConcurrentChannelContext(ctx, media, 5, func(m types.Media) types.Media {
+					return s.External.ExpandMedia(ctx, m, Host, &s.ResponseMetadata)
 				})
 			}
 
-			utils.FilterMedia(media, extensions, out)
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (s *SimpCity) dataToMedia(post Post, sourceName string) <-chan types.Media {
+func (s *SimpCity) dataToMedia(ctx context.Context, post Post, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := s.DownloadHeaders()
 
@@ -150,7 +152,9 @@ func (s *SimpCity) dataToMedia(post Post, sourceName string) <-chan types.Media 
 			}
 
 			media.Url = attachment.MediaUrl
-			out <- media
+			if !utils.Send(ctx, out, media) {
+				return
+			}
 		}
 	}()
 

@@ -1,6 +1,7 @@
 package cyberdrop
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,10 +14,10 @@ const BaseUrl = "https://cyberdrop.cr/"
 
 var f = fetch.New(nil, 0, false)
 
-func getImage(id string) (*Image, error) {
+func getImage(ctx context.Context, id string) (*Image, error) {
 	var image *Image
 	url := fmt.Sprintf("https://api.cyberdrop.cr/api/file/info/%s", id)
-	resp, err := f.GetResult(url, nil, &image)
+	resp, err := f.GetResult(ctx, url, nil, &image)
 
 	if err != nil {
 		return nil, err
@@ -25,7 +26,7 @@ func getImage(id string) (*Image, error) {
 	}
 
 	var auth *Auth
-	resp, err = f.GetResult(image.Url, nil, &auth)
+	resp, err = f.GetResult(ctx, image.Url, nil, &auth)
 
 	if err != nil {
 		return nil, err
@@ -39,11 +40,11 @@ func getImage(id string) (*Image, error) {
 	return image, nil
 }
 
-func getAlbum(id string) ([]string, error) {
+func getAlbum(ctx context.Context, id string) ([]string, error) {
 	ids := make([]string, 0)
 
 	url := fmt.Sprintf("%sa/%s", BaseUrl, id)
-	html, err := f.GetText(url)
+	html, err := f.GetText(ctx, url)
 	if err != nil {
 		return nil, err
 	}

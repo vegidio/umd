@@ -27,6 +27,10 @@ type downloadMsg struct {
 
 type downloadDone struct{}
 
+// downloadFinished signals that a single download has run to completion, either successfully or with
+// an error.
+type downloadFinished struct{}
+
 func downloadCmd(ch <-chan *fetch.Response) tea.Cmd {
 	return func() tea.Msg {
 		if resp, ok := <-ch; ok {
@@ -37,6 +41,15 @@ func downloadCmd(ch <-chan *fetch.Response) tea.Cmd {
 	}
 }
 
+// waitForFinish blocks until the download is over and reports it back to the model. It must not rely
+// on the progress reaching 100%, because failed downloads never get there.
+func waitForFinish(resp *fetch.Response) tea.Cmd {
+	return func() tea.Msg {
+		_ = resp.Error()
+		return downloadFinished{}
+	}
+}
+
 type progressModel struct {
 	progress      progress.Model
 	result        <-chan *fetch.Response
@@ -44,6 +57,9 @@ type progressModel struct {
 	queue         *shared.Queue
 	total         int
 	completed     int
+	percent       float64
+	done          bool
+	fullBarShown  bool
 	startTime     time.Time
 	lastEtaUpdate time.Time
 	eta           time.Duration
@@ -59,41 +75,35 @@ func (m *progressModel) Init() tea.Cmd {
 func (m *progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msgValue := msg.(type) {
 	case tickMsg:
-		if m.progress.Percent() >= 1 && !m.progress.IsAnimating() && m.queue.Incompleted() == 0 {
+		if m.fullBarShown {
 			return m, tea.Quit
 		}
 
-		var percent float64
+		m.percent = 1
 		if m.total > 0 {
-			percent = float64(m.completed) / float64(m.total)
+			m.percent = float64(m.completed) / float64(m.total)
 		}
 
-		barCmd := m.progress.SetPercent(percent)
-		return m, tea.Batch(tickCmd(), barCmd)
+		// Every download that was handed to us has run to completion; note that failed downloads count
+		// as finished too, otherwise the bar would never reach 100% and we would never quit. Give the
+		// finished bar one frame on screen before quitting.
+		m.fullBarShown = m.done && m.completed >= len(m.responses)
+
+		return m, tickCmd()
 
 	case downloadMsg:
 		m.queue.Add(msgValue.resp)
-
-		go func() {
-			_ = msgValue.resp.Track(func(_, _ int64, progress float64) {
-				if progress >= 1 {
-					m.completed++
-				}
-			})
-		}()
-
 		m.responses = append(m.responses, msgValue.resp)
-		return m, downloadCmd(m.result)
+		return m, tea.Batch(downloadCmd(m.result), waitForFinish(msgValue.resp))
+
+	case downloadFinished:
+		m.completed++
+		return m, nil
 
 	case downloadDone:
-		barCmd := m.progress.SetPercent(1)
+		m.done = true
 		m.eta = time.Duration(0)
-		return m, barCmd
-
-	case progress.FrameMsg:
-		updated, cmd := m.progress.Update(msg)
-		m.progress = updated.(progress.Model)
-		return m, cmd
+		return m, nil
 
 	case tea.KeyMsg:
 		switch msgValue.String() {
@@ -108,7 +118,7 @@ func (m *progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *progressModel) View() string {
 	width := len(strconv.Itoa(m.total))
 
-	percent := m.progress.Percent() * 100
+	percent := m.percent * 100
 	intPart := int(percent)
 	fracPart := int(percent*10) % 10
 	percentStr := fmt.Sprintf("%3d.%1d%%", intPart, fracPart)
@@ -130,7 +140,7 @@ func (m *progressModel) View() string {
 
 	return fmt.Sprintf("\nDownloading   %s%s%s%s%s  %s  %s   %s\n%s\n",
 		gray.Render("["), c, gray.Render("/"), t, gray.Render("]"),
-		m.progress.View(),
+		m.progress.ViewAs(m.percent),
 		green.Render(percentStr),
 		magenta.Render(fmt.Sprintf("ETA %v", eta)),
 

@@ -1,6 +1,7 @@
 package redgifs
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"regexp"
@@ -72,13 +73,13 @@ var _ types.Extractor = (*Redgifs)(nil)
 
 // region - Private methods
 
-func (r *Redgifs) getNewOrSavedToken() (string, error) {
+func (r *Redgifs) getNewOrSavedToken(ctx context.Context) (string, error) {
 	token, exists := r.BaseExtractor.Metadata[types.RedGifs]["token"].(string)
 
 	if !exists {
 		log.Debug("Issuing new RedGifs token")
 
-		auth, err := getToken()
+		auth, err := getToken(ctx)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -105,6 +106,7 @@ func (r *Redgifs) getNewOrSavedToken() (string, error) {
 }
 
 func (r *Redgifs) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	limit int,
 	extensions []string,
@@ -116,57 +118,57 @@ func (r *Redgifs) fetchMedia(
 		defer close(out)
 		var gifs <-chan saktypes.Result[[]Gif]
 
-		token, err := r.getNewOrSavedToken()
+		token, err := r.getNewOrSavedToken(ctx)
 		if err != nil {
-			out <- saktypes.Result[types.Media]{Err: err}
+			utils.Send(ctx, out, saktypes.Result[types.Media]{Err: err})
 			return
 		}
 
 		switch s := source.(type) {
 		case SourceVideo:
-			gifs = r.fetchGif(s, token)
+			gifs = r.fetchGif(ctx, s, token)
 		case SourceUser:
-			gifs = r.fetchUser(s, token, limit)
+			gifs = r.fetchUser(ctx, s, token, limit)
 		}
 
 		for gif := range gifs {
 			if gif.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: gif.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: gif.Err})
 				return
 			}
 
-			media := r.dataToMedia(gif.Data, source.Type())
-			utils.FilterMedia(media, extensions, out)
+			media := r.dataToMedia(ctx, gif.Data, source.Type())
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (r *Redgifs) fetchGif(source SourceVideo, token string) <-chan saktypes.Result[[]Gif] {
+func (r *Redgifs) fetchGif(ctx context.Context, source SourceVideo, token string) <-chan saktypes.Result[[]Gif] {
 	result := make(chan saktypes.Result[[]Gif])
 
 	go func() {
 		defer close(result)
 
-		response, err := getGif(
+		response, err := getGif(ctx,
 			fmt.Sprintf("Bearer %s", token),
 			fmt.Sprintf("https://www.redgifs.com/watch/%s", source.name),
 			source.name,
 		)
 
 		if err != nil {
-			result <- saktypes.Result[[]Gif]{Err: err}
+			utils.Send(ctx, result, saktypes.Result[[]Gif]{Err: err})
 			return
 		}
 
-		result <- saktypes.Result[[]Gif]{Data: []Gif{response.Gif}}
+		utils.Send(ctx, result, saktypes.Result[[]Gif]{Data: []Gif{response.Gif}})
 	}()
 
 	return result
 }
 
-func (r *Redgifs) fetchUser(source SourceUser, token string, limit int) <-chan saktypes.Result[[]Gif] {
+func (r *Redgifs) fetchUser(ctx context.Context, source SourceUser, token string, limit int) <-chan saktypes.Result[[]Gif] {
 	result := make(chan saktypes.Result[[]Gif])
 
 	go func() {
@@ -174,32 +176,36 @@ func (r *Redgifs) fetchUser(source SourceUser, token string, limit int) <-chan s
 
 		bearer := fmt.Sprintf("Bearer %s", token)
 		url := fmt.Sprintf("https://www.redgifs.com/users/%s", source.name)
-		response, err := getUser(bearer, url, source.name, 1)
+		response, err := getUser(ctx, bearer, url, source.name, 1)
 
 		if err != nil {
-			result <- saktypes.Result[[]Gif]{Err: err}
+			utils.Send(ctx, result, saktypes.Result[[]Gif]{Err: err})
 			return
 		}
 
-		result <- saktypes.Result[[]Gif]{Data: response.Gifs}
+		if !utils.Send(ctx, result, saktypes.Result[[]Gif]{Data: response.Gifs}) {
+			return
+		}
 		maxPages := math.Ceil(float64(limit) / 100)
 		numPages := int(math.Min(float64(response.Pages), maxPages))
 
 		for i := 2; i <= numPages; i++ {
-			response, err = getUser(bearer, url, source.name, i)
+			response, err = getUser(ctx, bearer, url, source.name, i)
 			if err != nil {
-				result <- saktypes.Result[[]Gif]{Err: err}
+				utils.Send(ctx, result, saktypes.Result[[]Gif]{Err: err})
 				return
 			}
 
-			result <- saktypes.Result[[]Gif]{Data: response.Gifs}
+			if !utils.Send(ctx, result, saktypes.Result[[]Gif]{Data: response.Gifs}) {
+				return
+			}
 		}
 	}()
 
 	return result
 }
 
-func (r *Redgifs) dataToMedia(gifs []Gif, sourceName string) <-chan types.Media {
+func (r *Redgifs) dataToMedia(ctx context.Context, gifs []Gif, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := r.DownloadHeaders()
 
@@ -221,7 +227,9 @@ func (r *Redgifs) dataToMedia(gifs []Gif, sourceName string) <-chan types.Media 
 			if err != nil {
 				continue
 			}
-			out <- media
+			if !utils.Send(ctx, out, media) {
+				return
+			}
 		}
 	}()
 

@@ -1,6 +1,7 @@
 package erome
 
 import (
+	"context"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -12,11 +13,11 @@ const BaseUrl = "https://www.erome.com/a/"
 
 var f = fetch.New(nil, 0, false)
 
-func getAlbum(id string) (*Album, error) {
+func getAlbum(ctx context.Context, id string) (*Album, error) {
 	links := make([]string, 0)
 
 	url := BaseUrl + id
-	html, err := f.GetText(url)
+	html, err := f.GetText(ctx, url)
 	if err != nil {
 		return nil, err
 	}

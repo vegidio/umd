@@ -105,14 +105,15 @@ func startQuery(
 	fields["parallel"] = parallel
 	fields["media.found"] = len(resp.Media)
 
-	result := shared.DownloadAll(resp.Media, fullDir, parallel)
-	responses, err := charm.StartProgress(result, len(resp.Media))
+	result, rejected := shared.DownloadAll(resp.Media, fullDir, parallel)
+	responses, err := charm.StartProgress(result, len(resp.Media)-len(rejected))
 	if err != nil {
 		otel.LogError("Error while downloading media", fields, err)
 		return err
 	}
 
 	downloads := lo.Map(responses, func(r *fetch.Response, _ int) shared.Download { return shared.ResponseToDownload(r) })
+	downloads = append(downloads, rejected...)
 	successes := lo.CountBy(downloads, func(d shared.Download) bool { return d.IsSuccess })
 	failures := lo.CountBy(downloads, func(d shared.Download) bool { return !d.IsSuccess })
 	fields["downloads.success"] = successes

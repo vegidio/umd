@@ -1,6 +1,7 @@
 package coomer
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -101,6 +102,7 @@ var _ types.Extractor = (*Coomer)(nil)
 // region - Private methods
 
 func (c *Coomer) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	_ int,
 	extensions []string,
@@ -114,39 +116,39 @@ func (c *Coomer) fetchMedia(
 		headers["Cookie"] = cookie
 	}
 
-	profile, pErr := getProfile(c.baseUrl, source.(serviceSource).ServiceName(), source.Name(), headers)
-
-	if pErr != nil {
-		out <- saktypes.Result[types.Media]{Err: pErr}
-		return out
-	}
-
 	go func() {
 		defer close(out)
+
+		profile, pErr := getProfile(ctx, c.baseUrl, source.(serviceSource).ServiceName(), source.Name(), headers)
+		if pErr != nil {
+			utils.Send(ctx, out, saktypes.Result[types.Media]{Err: pErr})
+			return
+		}
+
 		var responses <-chan saktypes.Result[Response]
 
 		switch s := source.(type) {
 		case SourceUser:
-			responses = getUser(c.baseUrl, *profile, headers)
+			responses = getUser(ctx, c.baseUrl, *profile, headers)
 		case SourcePost:
-			responses = getPost(c.baseUrl, *profile, s.Id, headers)
+			responses = getPost(ctx, c.baseUrl, *profile, s.Id, headers)
 		}
 
 		for response := range responses {
 			if response.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: response.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: response.Err})
 				return
 			}
 
-			media := c.dataToMedia(response.Data, profile.Name)
-			utils.FilterMedia(media, extensions, out)
+			media := c.dataToMedia(ctx, response.Data, profile.Name)
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (c *Coomer) dataToMedia(response Response, name string) <-chan types.Media {
+func (c *Coomer) dataToMedia(ctx context.Context, response Response, name string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := c.DownloadHeaders()
 
@@ -165,7 +167,9 @@ func (c *Coomer) dataToMedia(response Response, name string) <-chan types.Media 
 				if err != nil {
 					continue
 				}
-				out <- media
+				if !utils.Send(ctx, out, media) {
+					return
+				}
 			}
 		}
 	}()

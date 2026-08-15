@@ -1,6 +1,7 @@
 package imaglr
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -64,6 +65,7 @@ var _ types.Extractor = (*Imaglr)(nil)
 // region - Private methods
 
 func (i *Imaglr) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	_ int,
 	extensions []string,
@@ -79,23 +81,23 @@ func (i *Imaglr) fetchMedia(
 
 		switch s := source.(type) {
 		case SourcePost:
-			posts, err = i.fetchPost(s)
+			posts, err = i.fetchPost(ctx, s)
 		}
 
 		if err != nil {
-			out <- saktypes.Result[types.Media]{Err: err}
+			utils.Send(ctx, out, saktypes.Result[types.Media]{Err: err})
 			return
 		}
 
-		media := i.dataToMedia(posts, source.Name())
-		utils.FilterMedia(media, extensions, out)
+		media := i.dataToMedia(ctx, posts, source.Name())
+		utils.FilterMedia(ctx, media, extensions, out)
 	}()
 
 	return out
 }
 
-func (i *Imaglr) fetchPost(source SourcePost) ([]Post, error) {
-	post, err := getPost(source.name)
+func (i *Imaglr) fetchPost(ctx context.Context, source SourcePost) ([]Post, error) {
+	post, err := getPost(ctx, source.name)
 
 	if err != nil {
 		return make([]Post, 0), err
@@ -104,7 +106,7 @@ func (i *Imaglr) fetchPost(source SourcePost) ([]Post, error) {
 	return []Post{*post}, nil
 }
 
-func (i *Imaglr) dataToMedia(posts []Post, sourceName string) <-chan types.Media {
+func (i *Imaglr) dataToMedia(ctx context.Context, posts []Post, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := i.DownloadHeaders()
 
@@ -121,7 +123,9 @@ func (i *Imaglr) dataToMedia(posts []Post, sourceName string) <-chan types.Media
 			if err != nil {
 				continue
 			}
-			out <- media
+			if !utils.Send(ctx, out, media) {
+				return
+			}
 		}
 	}()
 

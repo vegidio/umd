@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/samber/lo"
 	"github.com/vegidio/go-sak/fetch"
 	"github.com/vegidio/umd"
 )
@@ -14,22 +13,34 @@ import (
 // Only one download session is supported at a time; starting a new one replaces the previous cancel function.
 var cancelDownloads func()
 
+// DownloadAll starts downloading every media item it can. Items whose URL can't even produce a request
+// - a relative link, say - are returned separately as already-failed downloads, so that callers keep
+// counting them and can put them in the report instead of losing them silently.
 func DownloadAll(
 	media []umd.Media,
 	directory string,
 	parallel int,
-) <-chan *fetch.Response {
+) (<-chan *fetch.Response, []Download) {
 	f := fetch.New(nil, 10, false)
 
-	requests := lo.Map(media, func(m umd.Media, _ int) *fetch.Request {
+	requests := make([]*fetch.Request, 0, len(media))
+	rejected := make([]Download, 0)
+
+	for _, m := range media {
 		filePath := CreateFilePath(directory, m)
-		request, _ := f.NewRequest(m.Url, filePath, m.Headers)
-		return request
-	})
+
+		request, err := f.NewRequest(m.Url, filePath, m.Headers)
+		if err != nil {
+			rejected = append(rejected, Download{Url: m.Url, FilePath: filePath, Error: err})
+			continue
+		}
+
+		requests = append(requests, request)
+	}
 
 	resp, cancel := f.DownloadFiles(requests, parallel)
 	cancelDownloads = cancel
-	return resp
+	return resp, rejected
 }
 
 func CancelDownloads() {

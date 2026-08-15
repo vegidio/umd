@@ -1,7 +1,9 @@
 package types
 
+import "context"
+
 type External interface {
-	ExpandMedia(media Media, ignoreHost string, metadata *Metadata) Media
+	ExpandMedia(ctx context.Context, media Media, ignoreHost string, metadata *Metadata) Media
 }
 
 // Extractor defines the interface for extractors.
@@ -28,6 +30,21 @@ type Extractor interface {
 	//   - *Response: the Response object.
 	//   - cancelFunc: a function to cancel the ongoing query.
 	QueryMedia(limit int, extensions []string, deep bool) (*Response, func())
+
+	// QueryMediaContext is QueryMedia bound to a context the caller already owns, so a deadline or a
+	// parent cancellation ends the query without having to hold on to the returned cancelFunc.
+	//
+	// # Parameters:
+	//   - ctx: context used to abort the query.
+	//   - limit: maximum number of media items to return; extraction stops once this limit is reached.
+	//   - extensions: list of file extensions (without a leading dot) to include in the results. If empty or nil, no
+	//     extension-based filtering is applied.
+	//   - deep: if true, performs a deep query on unknown URLs in an attempt to find extra media files.
+	//
+	// # Returns:
+	//   - *Response: the Response object.
+	//   - cancelFunc: a function to cancel the ongoing query.
+	QueryMediaContext(ctx context.Context, limit int, extensions []string, deep bool) (*Response, func())
 
 	// DownloadHeaders returns a map of headers to be used when downloading media files.
 	//

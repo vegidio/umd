@@ -1,6 +1,7 @@
 package jpgfish
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -72,6 +73,7 @@ var _ types.Extractor = (*JpgFish)(nil)
 // region - Private methods
 
 func (j *JpgFish) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	_ int,
 	extensions []string,
@@ -85,37 +87,38 @@ func (j *JpgFish) fetchMedia(
 
 		switch s := source.(type) {
 		case SourceImage:
-			images = j.fetchImage(s)
+			images = j.fetchImage(ctx, s)
 		case SourceAlbum, SourceUser:
 			return
 		}
 
 		for img := range images {
 			if img.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: img.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: img.Err})
 				return
 			}
 
-			media := j.dataToMedia(img.Data, source.Type())
-			utils.FilterMedia(media, extensions, out)
+			media := j.dataToMedia(ctx, img.Data, source.Type())
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (j *JpgFish) fetchImage(source SourceImage) <-chan saktypes.Result[Image] {
+func (j *JpgFish) fetchImage(ctx context.Context, source SourceImage) <-chan saktypes.Result[Image] {
 	result := make(chan saktypes.Result[Image])
 
 	go func() {
 		defer close(result)
-		img, err := getImage(source.id)
+		img, err := getImage(ctx, source.id)
 
 		if err != nil {
-			result <- saktypes.Result[Image]{Err: err}
-		} else {
-			result <- saktypes.Result[Image]{Data: *img}
+			utils.Send(ctx, result, saktypes.Result[Image]{Err: err})
+			return
 		}
+
+		utils.Send(ctx, result, saktypes.Result[Image]{Data: *img})
 	}()
 
 	return result
@@ -125,7 +128,7 @@ func (j *JpgFish) fetchImage(source SourceImage) <-chan saktypes.Result[Image] {
 
 // region - Private functions
 
-func (j *JpgFish) dataToMedia(img Image, sourceName string) <-chan types.Media {
+func (j *JpgFish) dataToMedia(ctx context.Context, img Image, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := j.DownloadHeaders()
 
@@ -142,7 +145,7 @@ func (j *JpgFish) dataToMedia(img Image, sourceName string) <-chan types.Media {
 		if err != nil {
 			return
 		}
-		out <- media
+		utils.Send(ctx, out, media)
 	}()
 
 	return out

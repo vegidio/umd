@@ -170,7 +170,7 @@ func main() {
 				return fmt.Errorf("directory path %s is invalid", directory)
 			}
 
-			isOutdated := github.IsOutdatedRelease("vegidio", "umd", shared.Version)
+			isOutdated := github.IsOutdatedRelease(ctx.Context, "vegidio", "umd", shared.Version)
 			if isOutdated {
 				charm.PrintNewVersion(
 					"A new version of UMD is available; please update at:",
@@ -198,6 +198,6 @@ func main() {
 			err = fmt.Errorf("%s; you must use the flag -ca or -cf", err.Error())
 		}
 
-		charm.PrintError(err.Error())
+		charm.PrintError("%s", err.Error())
 	}
 }

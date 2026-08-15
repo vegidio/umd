@@ -1,6 +1,7 @@
 package bunkr
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -75,6 +76,7 @@ var _ types.Extractor = (*Bunkr)(nil)
 // region - Private methods
 
 func (b *Bunkr) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	_ int,
 	extensions []string,
@@ -88,61 +90,65 @@ func (b *Bunkr) fetchMedia(
 
 		switch s := source.(type) {
 		case SourceMedia:
-			images = b.fetchImage(s)
+			images = b.fetchImage(ctx, s)
 		case SourceAlbum:
-			images = b.fetchAlbum(s)
+			images = b.fetchAlbum(ctx, s)
 		}
 
 		for img := range images {
 			if img.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: img.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: img.Err})
 				return
 			}
 
-			media := b.dataToMedia(img.Data, source.Type())
-			utils.FilterMedia(media, extensions, out)
+			media := b.dataToMedia(ctx, img.Data, source.Type())
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (b *Bunkr) fetchImage(source SourceMedia) <-chan saktypes.Result[Image] {
+func (b *Bunkr) fetchImage(ctx context.Context, source SourceMedia) <-chan saktypes.Result[Image] {
 	out := make(chan saktypes.Result[Image])
 
 	go func() {
 		defer close(out)
-		img, err := getImage(source.id)
+		img, err := getImage(ctx, source.id)
 
 		if err != nil {
-			out <- saktypes.Result[Image]{Err: err}
-		} else {
-			out <- saktypes.Result[Image]{Data: *img}
+			utils.Send(ctx, out, saktypes.Result[Image]{Err: err})
+			return
 		}
+
+		utils.Send(ctx, out, saktypes.Result[Image]{Data: *img})
 	}()
 
 	return out
 }
 
-func (b *Bunkr) fetchAlbum(source SourceAlbum) <-chan saktypes.Result[Image] {
+func (b *Bunkr) fetchAlbum(ctx context.Context, source SourceAlbum) <-chan saktypes.Result[Image] {
 	out := make(chan saktypes.Result[Image])
 
 	go func() {
 		defer close(out)
 
-		ids, err := getAlbum(source.id)
+		ids, err := getAlbum(ctx, source.id)
 		if err != nil {
-			out <- saktypes.Result[Image]{Err: err}
+			utils.Send(ctx, out, saktypes.Result[Image]{Err: err})
 			return
 		}
 
 		for _, id := range ids {
-			img, iErr := getImage(id)
+			img, iErr := getImage(ctx, id)
 
-			if iErr != nil {
-				out <- saktypes.Result[Image]{Err: iErr}
-			} else {
-				out <- saktypes.Result[Image]{Data: *img}
+			item := saktypes.Result[Image]{Err: iErr}
+			if iErr == nil {
+				item.Data = *img
+			}
+
+			if !utils.Send(ctx, out, item) {
+				return
 			}
 		}
 	}()
@@ -150,7 +156,7 @@ func (b *Bunkr) fetchAlbum(source SourceAlbum) <-chan saktypes.Result[Image] {
 	return out
 }
 
-func (b *Bunkr) dataToMedia(img Image, sourceName string) <-chan types.Media {
+func (b *Bunkr) dataToMedia(ctx context.Context, img Image, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := b.DownloadHeaders()
 
@@ -166,7 +172,7 @@ func (b *Bunkr) dataToMedia(img Image, sourceName string) <-chan types.Media {
 		if err != nil {
 			return
 		}
-		out <- media
+		utils.Send(ctx, out, media)
 	}()
 
 	return out

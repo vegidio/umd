@@ -1,6 +1,7 @@
 package erome
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -65,6 +66,7 @@ var _ types.Extractor = (*Erome)(nil)
 // region - Private methods
 
 func (e *Erome) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	_ int,
 	extensions []string,
@@ -78,41 +80,42 @@ func (e *Erome) fetchMedia(
 
 		switch s := source.(type) {
 		case SourceAlbum:
-			posts = e.fetchAlbum(s)
+			posts = e.fetchAlbum(ctx, s)
 		}
 
 		for post := range posts {
 			if post.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: post.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: post.Err})
 				return
 			}
 
-			media := e.dataToMedia(post.Data, source.Type())
-			utils.FilterMedia(media, extensions, out)
+			media := e.dataToMedia(ctx, post.Data, source.Type())
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (e *Erome) fetchAlbum(source SourceAlbum) <-chan saktypes.Result[Album] {
+func (e *Erome) fetchAlbum(ctx context.Context, source SourceAlbum) <-chan saktypes.Result[Album] {
 	result := make(chan saktypes.Result[Album])
 
 	go func() {
 		defer close(result)
-		album, err := getAlbum(source.Id)
+		album, err := getAlbum(ctx, source.Id)
 
 		if err != nil {
-			result <- saktypes.Result[Album]{Err: err}
-		} else {
-			result <- saktypes.Result[Album]{Data: *album}
+			utils.Send(ctx, result, saktypes.Result[Album]{Err: err})
+			return
 		}
+
+		utils.Send(ctx, result, saktypes.Result[Album]{Data: *album})
 	}()
 
 	return result
 }
 
-func (e *Erome) dataToMedia(album Album, sourceName string) <-chan types.Media {
+func (e *Erome) dataToMedia(ctx context.Context, album Album, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := e.DownloadHeaders()
 
@@ -129,7 +132,9 @@ func (e *Erome) dataToMedia(album Album, sourceName string) <-chan types.Media {
 			if err != nil {
 				continue
 			}
-			out <- media
+			if !utils.Send(ctx, out, media) {
+				return
+			}
 		}
 	}()
 

@@ -1,6 +1,7 @@
 package reddit
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -82,13 +83,13 @@ var _ types.Extractor = (*Reddit)(nil)
 
 // region - Private methods
 
-func (r *Reddit) getNewOrSavedToken() (string, error) {
+func (r *Reddit) getNewOrSavedToken(ctx context.Context) (string, error) {
 	token, exists := r.BaseExtractor.Metadata[types.Reddit]["token"].(string)
 
 	if !exists {
 		log.Debug("Issuing new Reddit token")
 
-		auth, err := getToken()
+		auth, err := getToken(ctx)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -115,6 +116,7 @@ func (r *Reddit) getNewOrSavedToken() (string, error) {
 }
 
 func (r *Reddit) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	_ int,
 	extensions []string,
@@ -126,42 +128,47 @@ func (r *Reddit) fetchMedia(
 		defer close(out)
 		var children <-chan saktypes.Result[ChildData]
 
-		token, err := r.getNewOrSavedToken()
+		token, err := r.getNewOrSavedToken(ctx)
 		if err != nil {
-			out <- saktypes.Result[types.Media]{Err: err}
+			utils.Send(ctx, out, saktypes.Result[types.Media]{Err: err})
 			return
 		}
 
 		switch s := source.(type) {
 		case SourceSubmission:
-			children = getSubmission(s.Id, token)
+			children = getSubmission(ctx, s.Id, token)
 		case SourceUser:
-			children = getUserSubmissions(s.name, token)
+			children = getUserSubmissions(ctx, s.name, token)
 		case SourceSubreddit:
-			children = getSubredditSubmissions(s.name, token)
+			children = getSubredditSubmissions(ctx, s.name, token)
 		}
 
 		for child := range children {
 			if child.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: child.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: child.Err})
 				return
 			}
 
-			media := r.dataToMedia(child.Data, source.Type(), source.Name())
+			media := r.dataToMedia(ctx, child.Data, source.Type(), source.Name())
 			if deep {
-				media = async.ConcurrentChannel(media, 5, func(m types.Media) types.Media {
-					return r.External.ExpandMedia(m, Host, &r.ResponseMetadata)
+				media = async.ConcurrentChannelContext(ctx, media, 5, func(m types.Media) types.Media {
+					return r.External.ExpandMedia(ctx, m, Host, &r.ResponseMetadata)
 				})
 			}
 
-			utils.FilterMedia(media, extensions, out)
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (r *Reddit) dataToMedia(child ChildData, sourceName string, name string) <-chan types.Media {
+func (r *Reddit) dataToMedia(
+	ctx context.Context,
+	child ChildData,
+	sourceName string,
+	name string,
+) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := r.DownloadHeaders()
 
@@ -181,7 +188,8 @@ func (r *Reddit) dataToMedia(child ChildData, sourceName string, name string) <-
 		if err != nil {
 			return
 		}
-		out <- media
+
+		utils.Send(ctx, out, media)
 	}()
 
 	return out

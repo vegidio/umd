@@ -1,6 +1,7 @@
 package umd
 
 import (
+	"context"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -12,7 +13,7 @@ type External struct {
 	mu sync.Mutex
 }
 
-func (e *External) ExpandMedia(media Media, ignoreHost string, metadata *Metadata) Media {
+func (e *External) ExpandMedia(ctx context.Context, media Media, ignoreHost string, metadata *Metadata) Media {
 	if media.Type == types.Unknown && !utils.HasHost(media.Url, ignoreHost) {
 		extractor, err := New().
 			WithMetadata(*metadata).
@@ -26,7 +27,7 @@ func (e *External) ExpandMedia(media Media, ignoreHost string, metadata *Metadat
 			"url": media.Url,
 		}).Debug("Expanding media")
 
-		resp, _ := extractor.QueryMedia(1, nil, false)
+		resp, _ := extractor.QueryMediaContext(ctx, 1, nil, false)
 		if resp.Error() != nil {
 			return media
 		}

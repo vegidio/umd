@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -93,7 +94,7 @@ func TestFilterMedia_PassThroughWhenEmpty(t *testing.T) {
 	mediaCh <- m2
 	close(mediaCh)
 
-	FilterMedia(mediaCh, nil, out)
+	FilterMedia(context.Background(), mediaCh, nil, out)
 	close(out)
 
 	results := make([]types.Media, 0)
@@ -113,7 +114,7 @@ func TestFilterMedia_FilterByExtension(t *testing.T) {
 	mediaCh <- m2
 	close(mediaCh)
 
-	FilterMedia(mediaCh, []string{"jpg"}, out)
+	FilterMedia(context.Background(), mediaCh, []string{"jpg"}, out)
 	close(out)
 
 	results := make([]types.Media, 0)
@@ -132,7 +133,7 @@ func TestFilterMedia_NoMatches(t *testing.T) {
 	mediaCh <- m1
 	close(mediaCh)
 
-	FilterMedia(mediaCh, []string{"png"}, out)
+	FilterMedia(context.Background(), mediaCh, []string{"png"}, out)
 	close(out)
 
 	results := make([]types.Media, 0)

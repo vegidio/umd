@@ -1,6 +1,7 @@
 package saint
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -61,6 +62,7 @@ var _ types.Extractor = (*Saint)(nil)
 // region - Private methods
 
 func (s *Saint) fetchMedia(
+	ctx context.Context,
 	source types.SourceType,
 	_ int,
 	extensions []string,
@@ -74,41 +76,42 @@ func (s *Saint) fetchMedia(
 
 		switch ss := source.(type) {
 		case SourceVideo:
-			videos = s.fetchVideo(ss)
+			videos = s.fetchVideo(ctx, ss)
 		}
 
 		for video := range videos {
 			if video.Err != nil {
-				out <- saktypes.Result[types.Media]{Err: video.Err}
+				utils.Send(ctx, out, saktypes.Result[types.Media]{Err: video.Err})
 				return
 			}
 
-			media := s.dataToMedia(video.Data, source.Type())
-			utils.FilterMedia(media, extensions, out)
+			media := s.dataToMedia(ctx, video.Data, source.Type())
+			utils.FilterMedia(ctx, media, extensions, out)
 		}
 	}()
 
 	return out
 }
 
-func (s *Saint) fetchVideo(source SourceVideo) <-chan saktypes.Result[Video] {
+func (s *Saint) fetchVideo(ctx context.Context, source SourceVideo) <-chan saktypes.Result[Video] {
 	result := make(chan saktypes.Result[Video])
 
 	go func() {
 		defer close(result)
-		video, err := getVideo(source.id)
+		video, err := getVideo(ctx, source.id)
 
 		if err != nil {
-			result <- saktypes.Result[Video]{Err: err}
-		} else {
-			result <- saktypes.Result[Video]{Data: *video}
+			utils.Send(ctx, result, saktypes.Result[Video]{Err: err})
+			return
 		}
+
+		utils.Send(ctx, result, saktypes.Result[Video]{Data: *video})
 	}()
 
 	return result
 }
 
-func (s *Saint) dataToMedia(video Video, sourceName string) <-chan types.Media {
+func (s *Saint) dataToMedia(ctx context.Context, video Video, sourceName string) <-chan types.Media {
 	out := make(chan types.Media)
 	headers := s.DownloadHeaders()
 
@@ -124,7 +127,7 @@ func (s *Saint) dataToMedia(video Video, sourceName string) <-chan types.Media {
 		if err != nil {
 			return
 		}
-		out <- media
+		utils.Send(ctx, out, media)
 	}()
 
 	return out

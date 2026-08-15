@@ -1,6 +1,7 @@
 package saint
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/vegidio/go-sak/fetch"
@@ -11,10 +12,10 @@ const BaseUrl = "https://turbo.cr/"
 
 var f = fetch.New(nil, 0, false)
 
-func getVideo(id string) (*Video, error) {
+func getVideo(ctx context.Context, id string) (*Video, error) {
 	var response *Response
 	url := fmt.Sprintf("%sapi/sign?v=%s", BaseUrl, id)
-	resp, err := f.GetResult(url, map[string]string{
+	resp, err := f.GetResult(ctx, url, map[string]string{
 		"Referer": url,
 	}, &response)
 

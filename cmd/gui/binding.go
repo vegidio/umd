@@ -4,6 +4,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"shared"
+	"sync"
 	"time"
 
 	"github.com/samber/lo"
@@ -133,9 +134,20 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 	queue := shared.NewQueue(5)
 	responses := make([]*fetch.Response, 0)
 
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	countResponses := func() int {
+		mu.Lock()
+		defer mu.Unlock()
+		return len(responses)
+	}
+
 	startMonitor := make(chan struct{})
+	monitorDone := make(chan struct{})
 
 	go func() {
+		defer close(monitorDone)
 		<-startMonitor
 
 		for {
@@ -146,17 +158,19 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 					return r
 				})
 
-				a.OnMediaDownloaded(len(responses), items)
+				a.OnMediaDownloaded(countResponses(), items)
 				break
 			}
 
-			a.OnMediaDownloaded(len(responses), items)
+			a.OnMediaDownloaded(countResponses(), items)
 			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 
+	result, rejected := shared.DownloadAll(media, fullDir, parallel)
+
 	opened := false
-	for response := range shared.DownloadAll(media, fullDir, parallel) {
+	for response := range result {
 		queue.Add(response)
 
 		if !opened {
@@ -164,20 +178,30 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 			opened = true
 		}
 
+		wg.Add(1)
 		go func(r *fetch.Response) {
-			response.Track(func(_, _ int64, progress float64) {
-				if progress >= 1 {
-					responses = append(responses, response)
-				}
-			})
+			defer wg.Done()
+
+			// Wait for the download to be over; a failed download never reaches 100%, so we can't key
+			// off the progress here.
+			_ = r.Error()
+
+			mu.Lock()
+			responses = append(responses, r)
+			mu.Unlock()
 		}(response)
 	}
 
-	for len(responses) < len(media) {
-		// waiting for all responses to complete
+	// Nothing was ever downloaded, so the monitor is still waiting to be started
+	if !opened {
+		close(startMonitor)
 	}
 
+	wg.Wait()
+	<-monitorDone
+
 	downloads := lo.Map(responses, func(r *fetch.Response, _ int) shared.Download { return shared.ResponseToDownload(r) })
+	downloads = append(downloads, rejected...)
 	successes := lo.CountBy(downloads, func(d shared.Download) bool { return d.IsSuccess })
 	failures := lo.CountBy(downloads, func(d shared.Download) bool { return !d.IsSuccess })
 	fields["downloads.success"] = successes
@@ -194,7 +218,7 @@ func (a *App) StartDownload(media []umd.Media, directory string, parallel int, e
 }
 
 func (a *App) IsOutdated() bool {
-	return github.IsOutdatedRelease("vegidio", "umd", shared.Version)
+	return github.IsOutdatedRelease(a.ctx, "vegidio", "umd", shared.Version)
 }
 
 func (a *App) GetHomeDirectory() string {

@@ -1,6 +1,7 @@
 package redgifs
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/vegidio/go-sak/fetch"
@@ -10,7 +11,7 @@ const BaseUrl = "https://api.redgifs.com/"
 
 var f = fetch.New(nil, 0, false)
 
-func getToken() (*Auth, error) {
+func getToken(ctx context.Context) (*Auth, error) {
 	var auth *Auth
 	url := BaseUrl + "v2/auth/temporary"
 	headers := map[string]string{
@@ -19,7 +20,7 @@ func getToken() (*Auth, error) {
 		"Referer":      "https://www.redgifs.com/",
 	}
 
-	resp, err := f.GetResult(url, headers, &auth)
+	resp, err := f.GetResult(ctx, url, headers, &auth)
 
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func getToken() (*Auth, error) {
 	return auth, nil
 }
 
-func getGif(token string, videoUrl string, videoId string) (*GifResponse, error) {
+func getGif(ctx context.Context, token string, videoUrl string, videoId string) (*GifResponse, error) {
 	var response *GifResponse
 	url := BaseUrl + fmt.Sprintf("v2/gifs/%s?views=yes", videoId)
 	headers := map[string]string{
@@ -38,7 +39,7 @@ func getGif(token string, videoUrl string, videoId string) (*GifResponse, error)
 		"X-CustomHeader": videoUrl,
 	}
 
-	resp, err := f.GetResult(url, headers, &response)
+	resp, err := f.GetResult(ctx, url, headers, &response)
 
 	if err != nil {
 		return nil, err
@@ -49,7 +50,7 @@ func getGif(token string, videoUrl string, videoId string) (*GifResponse, error)
 	return response, nil
 }
 
-func getUser(token string, userUrl string, userName string, page int) (*UserResponse, error) {
+func getUser(ctx context.Context, token string, userUrl string, userName string, page int) (*UserResponse, error) {
 	var response *UserResponse
 	url := BaseUrl + fmt.Sprintf("v2/users/%s/search?page=%d&count=100&order=latest&type=a&views=yes", userName, page)
 	headers := map[string]string{
@@ -57,7 +58,7 @@ func getUser(token string, userUrl string, userName string, page int) (*UserResp
 		"X-CustomHeader": userUrl,
 	}
 
-	resp, err := f.GetResult(url, headers, &response)
+	resp, err := f.GetResult(ctx, url, headers, &response)
 
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package imaglr
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -14,9 +15,9 @@ const BaseUrl = "https://imaglr.com/"
 
 var f = fetch.New(nil, 0, false)
 
-func getPost(id string) (*Post, error) {
+func getPost(ctx context.Context, id string) (*Post, error) {
 	url := BaseUrl + fmt.Sprintf("post/%s", id)
-	html, err := f.GetText(url)
+	html, err := f.GetText(ctx, url)
 	if err != nil {
 		return nil, err
 	}
